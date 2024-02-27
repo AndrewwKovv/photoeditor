@@ -86,7 +86,7 @@ export default {
     loadImageFromUrl() {
       if (this.imageUrl.trim() !== "") {
         const img = new Image();
-        img.crossOrigin = "Anonymous"; // Устанавливаем заголовок для избежания ошибки безопасности
+        img.crossOrigin = "Anonymous";
         img.onload = () => {
           const canvas = this.$refs.canvas;
           const canvasContext = canvas.getContext("2d");
@@ -97,15 +97,18 @@ export default {
           );
           const newWidth = img.width * scale;
           const newHeight = img.height * scale;
-          const x = (canvas.width - newWidth) / 2;
-          const y = (canvas.height - newHeight) / 2;
-          canvasContext.drawImage(img, x, y, newWidth, newHeight);
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+          // const x = (canvas.width - newWidth) / 2;
+          // const y = (canvas.height - newHeight) / 2;
+          canvasContext.drawImage(img, 0, 0, newWidth, newHeight);
           this.imageWidth = img.width;
           this.imageHeight = img.height;
         };
         img.src = this.imageUrl;
       }
     },
+
     renderImage(file) {
       // Метод для отображения изображения на холсте
       const reader = new FileReader(); // Создаем объект для чтения файла
@@ -128,12 +131,14 @@ export default {
           const newWidth = img.width * scale;
           const newHeight = img.height * scale;
 
-          // Вычисляем координаты для отображения изображения по центру холста
-          const x = (canvas.width - newWidth) / 2;
-          const y = (canvas.height - newHeight) / 2;
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+          // // Вычисляем координаты для отображения изображения по центру холста
+          // const x = (canvas.width - newWidth) / 2;
+          // const y = (canvas.height - newHeight) / 2;
 
           // Отрисовываем изображение на холсте
-          canvasContext.drawImage(img, x, y, newWidth, newHeight);
+          canvasContext.drawImage(img, 0, 0, newWidth, newHeight);
 
           // Устанавливаем ширину и высоту изображения
           this.imageWidth = img.width;
