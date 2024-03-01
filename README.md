@@ -1,4 +1,4 @@
-# photo-editor
+# photo-editor - https://andrewwkovv.github.io/photoeditor/
 
 ## Project setup
 ```
