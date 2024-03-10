@@ -1,10 +1,13 @@
 <template>
   <div>
-    <MainHeader :title="photoshopTitle" />
     <div class="content">
-      <Sidebar v-model:activeTool="activeTool" />
+      <Sidebar
+        v-model:activeTool="activeTool"
+        @image-selected="handleImageSelected"
+      />
       <ImageCanvas
         :activeTool="activeTool"
+        :selectedImage="selectedImage"
         @color-selected="handleColorSelected"
       />
     </div>
@@ -13,26 +16,27 @@
 
 <script>
 import ImageCanvas from "../components/ImageCanvas.vue";
-import MainHeader from "../components/MainHeader.vue";
 import Sidebar from "../components/Sidebar.vue";
 
 export default {
   name: "HomePage",
   components: {
     ImageCanvas,
-    MainHeader,
     Sidebar,
   },
   data() {
     return {
-      photoshopTitle: "Редактор Фото",
       activeTool: "",
+      selectedImage: null,
       selectedColor: null,
     };
   },
   methods: {
-    handleColorSelected(color) {
-      this.selectedColor = color;
+    handleImageSelected(imageData) {
+      this.selectedImage = imageData;
+    },
+    handleColorSelected(colorData) {
+      this.selectedColor = colorData;
     },
   },
 };
@@ -41,6 +45,9 @@ export default {
 <style scoped>
 .content {
   display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
   background-color: #383838;
 }
 </style>
