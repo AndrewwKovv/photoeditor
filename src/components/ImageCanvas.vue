@@ -7,6 +7,8 @@
       :selectedColor="selectedColor"
       :selectedPixel="selectedPixel"
       :activeTool="activeTool"
+      :selectedScale="selectedScale"
+      @scale-change="handleScaleChange"
     />
   </div>
 </template>
@@ -28,6 +30,7 @@ export default {
       selectedPixel: { x: 0, y: 0 },
       imageUrl: "",
       canvasRef: null,
+      selectedScale: 100,
     };
   },
   props: {
@@ -58,27 +61,18 @@ export default {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = this.canvasRef.clientWidth;
         canvas.height = this.canvasRef.clientHeight;
+        const scaleFactor = this.selectedScale / 100; // масштабный коэффициент
 
-        // let newImageWidth, newImageHeight;
-        // if (canvas.width < img.width) {
-        //   const coef = canvas.width / img.width;
-        //   newImageWidth = canvas.width - 100;
-        //   newImageHeight = canvas.height * coef;
-        // } else if (canvas.height < img.height) {
-        //   const coef = canvas.height / img.height;
-        //   newImageWidth = canvas.width * coef;
-        //   newImageHeight = canvas.height - 100;
-        // }
+        const scaledWidth = img.width * scaleFactor;
+        const scaledHeight = img.height * scaleFactor;
 
-        const x = Math.abs(canvas.width - img.width) / 2;
-        const y = Math.abs(canvas.height - img.height) / 2;
+        const x = (canvas.width - scaledWidth) / 2;
+        const y = (canvas.height - scaledHeight) / 2;
 
-        // Отрисовываем изображение на холсте
-        ctx.drawImage(img, x, y, img.width, img.height);
+        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
 
-        // Устанавливаем ширину и высоту изображения
-        this.imageWidth = img.width;
-        this.imageHeight = img.height;
+        this.imageWidth = scaledWidth; // обновление ширины изображения
+        this.imageHeight = scaledHeight; // обновление высоты изображения
       };
       img.src = imageUrl;
     },
@@ -111,6 +105,11 @@ export default {
       const b = pixelData[2];
       this.selectedColor = { r, g, b };
     },
+    handleScaleChange(scale) {
+      this.selectedScale = scale;
+      console.log(this.selectedScale);
+      this.renderImage(this.selectedImage); // перерисовываем изображение с новым масштабом
+    },
   },
 };
 </script>
@@ -124,6 +123,6 @@ export default {
   flex: 1;
 }
 .canvas-editor {
-  height: calc(100% - 20px);
+  height: calc(100% - 25px);
 }
 </style>
