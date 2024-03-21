@@ -46,6 +46,19 @@
             class="transparent-input"
           />
         </div>
+        <div class="modal-content__item">
+          <p>
+            Общее количество пикселей до изменения размера:
+            {{ (imageWidth * imageHeight) / 1000000 }} мегапикселей
+          </p>
+          <p>
+            Общее количество пикселей после изменения размера:
+            {{
+              ((newWidth || imageWidth) * (newHeight || imageHeight)) / 1000000
+            }}
+            мегапикселей
+          </p>
+        </div>
         <div class="modal-content__item modal-content__ratio">
           <label class="modal-content__ratio-btn" for="maintain-aspect-ratio">
             <input
@@ -55,6 +68,21 @@
             />
             Сохранить пропорции
           </label>
+        </div>
+        <div class="modal-content__item">
+          <label for="interpolation-algorithm">Алгоритм интерполяции:</label>
+          <select
+            v-model="interpolationAlgorithm"
+            id="interpolation-algorithm"
+            class="transparent-input"
+          >
+            <option value="nearest-neighbor">Ближайший сосед</option>
+          </select>
+          <span class="tooltip"
+            >Алгоритм ближайшего соседа используется для изменения размера
+            изображения путем выбора цвета пикселя из оригинального изображения,
+            наиболее близкого к центру пикселя в новом изображении.</span
+          >
         </div>
         <div class="modal-content__item modal-content__button">
           <button @click="resizeImage">Изменить размер</button>
@@ -85,6 +113,12 @@ export default {
       canvasRef: null,
       selectedScale: 100,
       isModalVisible: this.isResizeModalVisible,
+      interpolationAlgorithm: "nearest-neighbor",
+      resizeType: "percent", // Добавлено объявление переменной для типа изменения
+      newWidth: null, // Добавлено объявление переменной для новой ширины
+      newHeight: null, // Добавлено объявление переменной для новой высоты
+      maintainAspectRatio: false,
+      aspectRatio: 1,
     };
   },
   props: {
@@ -173,7 +207,28 @@ export default {
       this.isModalVisible = false;
       this.$emit("closeResizeModal");
     },
-    resizeImage(newWidth, newHeight) {
+    resizeImage() {
+      let newWidth = this.newWidth;
+      let newHeight = this.newHeight;
+
+      // Проверка сохранения пропорций
+      if (this.maintainAspectRatio) {
+        const aspectRatio = this.imageWidth / this.imageHeight;
+        if (newWidth && newHeight) {
+          if (newWidth !== Math.round(newHeight * aspectRatio)) {
+            // Если ширина не соответствует пропорции, то пересчитываем высоту
+            newHeight = Math.round(newWidth / aspectRatio);
+          } else if (newHeight !== Math.round(newWidth / aspectRatio)) {
+            // Если высота не соответствует пропорции, то пересчитываем ширину
+            newWidth = Math.round(newHeight * aspectRatio);
+          }
+        } else if (newWidth) {
+          newHeight = Math.round(newWidth / aspectRatio);
+        } else if (newHeight) {
+          newWidth = Math.round(newHeight * aspectRatio);
+        }
+      }
+
       // Обработка изменения размера изображения
       console.log("New Width:", newWidth);
       console.log("New Height:", newHeight);
@@ -230,7 +285,7 @@ export default {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  max-width: 400px;
+  max-width: 570px;
   width: 100%;
   color: #fff;
 }
