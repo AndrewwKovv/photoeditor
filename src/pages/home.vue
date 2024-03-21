@@ -4,11 +4,14 @@
       <Sidebar
         v-model:activeTool="activeTool"
         @image-selected="handleImageSelected"
+        @openResizeModal="handleOpenResizeModal"
       />
       <ImageCanvas
         :activeTool="activeTool"
         :selectedImage="selectedImage"
         @color-selected="handleColorSelected"
+        :isResizeModalVisible="isResizeModalVisible"
+        @closeResizeModal="handleCloseResizeModal"
       />
     </div>
   </div>
@@ -29,6 +32,7 @@ export default {
       activeTool: "",
       selectedImage: null,
       selectedColor: null,
+      isResizeModalVisible: false,
     };
   },
   methods: {
@@ -37,6 +41,12 @@ export default {
     },
     handleColorSelected(colorData) {
       this.selectedColor = colorData;
+    },
+    handleOpenResizeModal() {
+      this.isResizeModalVisible = true;
+    },
+    handleCloseResizeModal() {
+      this.isResizeModalVisible = false;
     },
   },
 };

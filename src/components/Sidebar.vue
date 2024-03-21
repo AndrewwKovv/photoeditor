@@ -2,7 +2,7 @@
   <aside class="sidebar">
     <div @click="openModalUpload">
       <img
-        src="../assets/icons/upload.png"
+        src="../assets/icons/Icon/W95-60.png"
         alt="Upload"
         class="file-upload-icon"
       />
@@ -25,12 +25,19 @@
         >{{ tool.name }}</span
       >
     </div>
+    <div @click="saveCanvasImage">
+      <img
+        src="../assets/icons/Icon/W95-139.png"
+        alt="Save images"
+        class="file-upload-icon"
+      />
+    </div>
   </aside>
   <div v-if="isModalVisible" @click="closeModal" class="modal">
     <div class="modal-content" @click.stop>
       <div class="upload__cont">
         <img
-          src="../assets/icons/upload.png"
+          src="../assets/icons/Icon/W95-59.png"
           alt="Upload"
           class="file-upload-button"
           @click="openFileInput"
@@ -60,7 +67,12 @@
 <script>
 export default {
   name: "sidebar-menu",
-  emits: ["imageSelected", "update:activeTool", "image-selected"],
+  emits: [
+    "imageSelected",
+    "update:activeTool",
+    "image-selected",
+    "openResizeModal",
+  ],
   props: {
     activeTool: String,
   },
@@ -70,7 +82,12 @@ export default {
         {
           id: 1,
           name: "Пипетка",
-          icon: require("../assets/icons/pipetka.png"),
+          icon: require("../assets/icons/Icon/W95-63.png"),
+        },
+        {
+          id: 2,
+          name: "Изменение размера",
+          icon: require("../assets/icons/Icon/W95-82.png"),
         },
       ],
       showTooltipFlag: false,
@@ -85,6 +102,9 @@ export default {
         "update:activeTool",
         this.activeTool === tool.name ? "" : tool.name
       );
+      if (tool.name === "Изменение размера") {
+        this.$emit("openResizeModal");
+      }
     },
     showTooltip(toolName) {
       this.showTooltipFlag = true;
@@ -122,6 +142,16 @@ export default {
       this.imageUrl = "";
       this.closeModal();
     },
+    saveCanvasImage() {
+      const canvas = document.getElementById("canvas");
+      const imageDataURL = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = imageDataURL;
+      link.download = "my_img.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
   },
   beforeUnmount() {
     if (this.selectedImage) {
@@ -147,10 +177,8 @@ export default {
   border: solid 1px white;
   background-color: #535353;
   position: relative;
-}
-
-.sidebar div img {
-  width: 24px;
+  width: 35px;
+  height: 35px;
 }
 
 .tooltip {
@@ -161,7 +189,7 @@ export default {
   border-radius: 3px;
   padding: 2px;
   left: 100%;
-  transform: translateX(-50%);
+  transform: translateX(-10%);
   white-space: nowrap;
   display: none;
   z-index: 999;
@@ -223,7 +251,9 @@ export default {
   padding: 5px;
   margin: 10px;
 }
-
+.file-upload-icon {
+  height: 20.84px;
+}
 input[type="file"] {
   display: none;
 }

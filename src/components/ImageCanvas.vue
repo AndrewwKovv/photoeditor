@@ -1,6 +1,7 @@
 <template>
   <div class="canvas-container">
-    <canvas class="canvas-editor" ref="canvas"></canvas>
+    <canvas id="canvas" class="canvas-editor" ref="canvas"></canvas>
+
     <ImageFooter
       :imageWidth="imageWidth"
       :imageHeight="imageHeight"
@@ -10,6 +11,57 @@
       :selectedScale="selectedScale"
       @scale-change="handleScaleChange"
     />
+
+    <div v-if="isModalVisible" class="modal">
+      <div class="modal-content modal-content__wrapper" @click.stop>
+        <h2>Изменение размера изображения</h2>
+        <div class="modal-content__item">
+          <label for="resize-type">Тип изменения:</label>
+          <select
+            v-model="resizeType"
+            id="resize-type"
+            class="transparent-input"
+          >
+            <option value="percent">Проценты</option>
+            <option value="pixels">Пиксели</option>
+          </select>
+        </div>
+        <div class="modal-content__item">
+          <label for="width">Ширина:</label>
+          <input
+            type="number"
+            v-model.number="newWidth"
+            id="width"
+            min="1"
+            class="transparent-input"
+          />
+        </div>
+        <div class="modal-content__item">
+          <label for="height">Высота:</label>
+          <input
+            type="number"
+            v-model.number="newHeight"
+            id="height"
+            min="1"
+            class="transparent-input"
+          />
+        </div>
+        <div class="modal-content__item modal-content__ratio">
+          <label class="modal-content__ratio-btn" for="maintain-aspect-ratio">
+            <input
+              type="checkbox"
+              id="maintain-aspect-ratio"
+              v-model="maintainAspectRatio"
+            />
+            Сохранить пропорции
+          </label>
+        </div>
+        <div class="modal-content__item modal-content__button">
+          <button @click="resizeImage">Изменить размер</button>
+          <button @click="closeResizeModal">Отмена</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -22,6 +74,7 @@ export default {
   components: {
     ImageFooter,
   },
+  emits: ["closeResizeModal"],
   data() {
     return {
       imageWidth: 0,
@@ -31,16 +84,23 @@ export default {
       imageUrl: "",
       canvasRef: null,
       selectedScale: 100,
+      isModalVisible: this.isResizeModalVisible,
     };
   },
   props: {
     activeTool: String,
     selectedImage: String,
+    isResizeModalVisible: Boolean,
   },
   mounted() {
     this.canvasRef = this.$refs.canvas;
     this.canvasRef.addEventListener("click", this.handleCanvasClick);
     this.setupImageWatcher();
+  },
+  watch: {
+    isResizeModalVisible(newValue) {
+      this.isModalVisible = newValue;
+    },
   },
   methods: {
     setupImageWatcher() {
@@ -107,8 +167,18 @@ export default {
     },
     handleScaleChange(scale) {
       this.selectedScale = scale;
-      console.log(this.selectedScale);
-      this.renderImage(this.selectedImage); // перерисовываем изображение с новым масштабом
+      this.renderImage(this.selectedImage);
+    },
+    closeResizeModal() {
+      this.isModalVisible = false;
+      this.$emit("closeResizeModal");
+    },
+    resizeImage(newWidth, newHeight) {
+      // Обработка изменения размера изображения
+      console.log("New Width:", newWidth);
+      console.log("New Height:", newHeight);
+      // Закрыть модальное окно после изменения размера
+      this.closeResizeModal();
     },
   },
 };
@@ -124,5 +194,81 @@ export default {
 }
 .canvas-editor {
   height: calc(100% - 25px);
+}
+
+/* Добавленные стили для модального окна изменения размера */
+
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Прозрачный черный фон */
+  z-index: 1000;
+}
+
+.transparent-input {
+  width: 100%;
+  padding: 5px;
+  margin-top: 5px;
+  border: 1px solid #fff;
+  background-color: transparent;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.transparent-input:focus {
+  outline: none;
+}
+
+.modal-content__wrapper {
+  background-color: rgba(83, 83, 83, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  max-width: 400px;
+  width: 100%;
+  color: #fff;
+}
+
+.modal-content__item {
+  margin-bottom: 15px;
+}
+
+.modal-content__ratio {
+  display: flex;
+  align-items: center;
+}
+.modal-content__ratio .modal-content__ratio-btn {
+  display: flex;
+  align-items: center;
+}
+.modal-content__ratio .modal-content__ratio-btn input[type="checkbox"] {
+  margin-right: 5px;
+  flex-shrink: 0;
+}
+
+.modal-content__button {
+  display: flex;
+  justify-content: space-around;
+}
+
+.modal-content__button button {
+  padding: 10px 20px;
+  border: 1px solid #fff;
+  background-color: transparent;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.modal-content__button button:hover {
+  background-color: #fff;
+  color: #000;
 }
 </style>
