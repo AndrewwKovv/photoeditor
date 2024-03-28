@@ -134,53 +134,87 @@ export default {
   mounted() {
     this.canvasRef = this.$refs.canvas;
     this.canvasRef.addEventListener("click", this.handleCanvasClick);
-    this.setupImageWatcher();
+    // this.setupImageWatcher();
   },
   watch: {
     isResizeModalVisible(newValue) {
       this.isModalVisible = newValue;
       this.updateModal();
     },
+    selectedImage() {
+      this.selectedScale = 100;
+      this.renderImage();
+    },
   },
   methods: {
-    setupImageWatcher() {
-      watch(
-        () => this.selectedImage,
-        (imageData) => {
-          if (imageData) {
-            this.renderImage(imageData);
-          }
-        }
-      );
-    },
-    renderImage(imageUrl) {
+    // setupImageWatcher() {
+    //   watch(
+    //     () => this.selectedImage,
+    //     (imageData) => {
+    //       if (imageData) {
+    //         this.renderImage(imageData);
+    //       }
+    //     }
+    //   );
+    // },
+    // renderImage(imageUrl) {
+    //   const img = new Image();
+    //   const canvas = this.$refs.canvas;
+    //   const ctx = this.canvasRef?.getContext("2d");
+    //   img.onload = () => {
+    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //     canvas.width = this.canvasRef.clientWidth;
+    //     canvas.height = this.canvasRef.clientHeight;
+    //     const scaleFactor = this.calculateScaleFactor(img.width, img.height);
+
+    //     const scaledWidth = Math.round(
+    //       img.width * scaleFactor * (this.selectedScale / 100)
+    //     );
+    //     const scaledHeight = Math.round(
+    //       img.height * scaleFactor * (this.selectedScale / 100)
+    //     );
+
+    //     const x = Math.round((canvas.width - scaledWidth) / 2);
+    //     const y = Math.round((canvas.height - scaledHeight) / 2);
+
+    //     ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+
+    //     this.imageWidth = scaledWidth; // обновление ширины изображения
+    //     this.imageHeight = scaledHeight; // обновление высоты изображения
+    //     const aspectRatio = this.imageWidth / this.imageHeight;
+    //     this.aspectRatio = aspectRatio;
+    //   };
+    //   img.src = imageUrl;
+    // },
+    renderImage(newWidth, newHeight) {
       const img = new Image();
       const canvas = this.$refs.canvas;
-      const ctx = this.canvasRef?.getContext("2d");
+      const ctx = canvas.getContext("2d");
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = this.canvasRef.clientWidth;
         canvas.height = this.canvasRef.clientHeight;
-        const scaleFactor = this.calculateScaleFactor(img.width, img.height);
 
-        const scaledWidth = Math.round(
-          img.width * scaleFactor * (this.selectedScale / 100)
-        );
-        const scaledHeight = Math.round(
-          img.height * scaleFactor * (this.selectedScale / 100)
-        );
+        // Выбор алгоритма интерполяции
+        let resizedImageData;
+        if (this.interpolationAlgorithm === "nearest-neighbor") {
+          const scaleFactor = this.calculateScaleFactor(img.width, img.height);
+          const scaledWidth = Math.round(img.width * scaleFactor);
+          const scaledHeight = Math.round(img.height * scaleFactor);
+          resizedImageData = nearestNeighborInterpolation(
+            img,
+            scaledWidth,
+            scaledHeight
+          );
+        }
 
-        const x = Math.round((canvas.width - scaledWidth) / 2);
-        const y = Math.round((canvas.height - scaledHeight) / 2);
-
-        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-
-        this.imageWidth = scaledWidth; // обновление ширины изображения
-        this.imageHeight = scaledHeight; // обновление высоты изображения
+        ctx.putImageData(resizedImageData, 0, 0);
+        this.imageWidth = newWidth;
+        this.imageHeight = newHeight;
         const aspectRatio = this.imageWidth / this.imageHeight;
         this.aspectRatio = aspectRatio;
       };
-      img.src = imageUrl;
+      img.src = this.selectedImage;
     },
 
     calculateScaleFactor(originalWidth, originalHeight) {

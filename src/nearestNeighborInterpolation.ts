@@ -1,12 +1,3 @@
-// nearestNeighborInterpolation.ts
-
-/**
- * Функция для изменения размера изображения с использованием алгоритма ближайшего соседа.
- * @param imageData - Объект ImageData исходного изображения.
- * @param newWidth - Новая ширина изображения.
- * @param newHeight - Новая высота изображения.
- * @returns Объект ImageData нового измененного изображения.
- */
 export function nearestNeighborInterpolation(
   imageData: ImageData,
   newWidth: number,
