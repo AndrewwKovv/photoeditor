@@ -114,6 +114,7 @@ export default {
       selectedPixel: { x: 0, y: 0 },
       imageUrl: "",
       canvasRef: null,
+      newImg: null,
       selectedScale: 100,
       isModalVisible: this.isResizeModalVisible,
       interpolationAlgorithm: "nearest-neighbor",
@@ -122,8 +123,8 @@ export default {
       newHeight: null,
       maintainAspectRatio: false,
       aspectRatio: 1,
-      widthPercent: 100,
-      heightPercent: 100,
+      widthPercent: null,
+      heightPercent: null,
     };
   },
   props: {
@@ -143,78 +144,86 @@ export default {
     },
     selectedImage() {
       this.selectedScale = 100;
-      this.renderImage();
+      this.handleImageProportions();
+    },
+    newImg: {
+      handler() {
+        this.handleImageProportions();
+      },
+      deep: true,
     },
   },
   methods: {
-    // setupImageWatcher() {
-    //   watch(
-    //     () => this.selectedImage,
-    //     (imageData) => {
-    //       if (imageData) {
-    //         this.renderImage(imageData);
-    //       }
-    //     }
-    //   );
-    // },
-    // renderImage(imageUrl) {
-    //   const img = new Image();
-    //   const canvas = this.$refs.canvas;
-    //   const ctx = this.canvasRef?.getContext("2d");
-    //   img.onload = () => {
-    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //     canvas.width = this.canvasRef.clientWidth;
-    //     canvas.height = this.canvasRef.clientHeight;
-    //     const scaleFactor = this.calculateScaleFactor(img.width, img.height);
-
-    //     const scaledWidth = Math.round(
-    //       img.width * scaleFactor * (this.selectedScale / 100)
-    //     );
-    //     const scaledHeight = Math.round(
-    //       img.height * scaleFactor * (this.selectedScale / 100)
-    //     );
-
-    //     const x = Math.round((canvas.width - scaledWidth) / 2);
-    //     const y = Math.round((canvas.height - scaledHeight) / 2);
-
-    //     ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-
-    //     this.imageWidth = scaledWidth; // обновление ширины изображения
-    //     this.imageHeight = scaledHeight; // обновление высоты изображения
-    //     const aspectRatio = this.imageWidth / this.imageHeight;
-    //     this.aspectRatio = aspectRatio;
-    //   };
-    //   img.src = imageUrl;
-    // },
-    renderImage(newWidth, newHeight) {
+    renderImage() {
       const img = new Image();
-      const canvas = this.$refs.canvas;
-      const ctx = canvas.getContext("2d");
+      const canvas = this.canvasRef;
+      const ctx = this.canvasRef?.getContext("2d");
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = this.canvasRef.clientWidth;
         canvas.height = this.canvasRef.clientHeight;
 
-        // Выбор алгоритма интерполяции
-        let resizedImageData;
-        if (this.interpolationAlgorithm === "nearest-neighbor") {
-          const scaleFactor = this.calculateScaleFactor(img.width, img.height);
-          const scaledWidth = Math.round(img.width * scaleFactor);
-          const scaledHeight = Math.round(img.height * scaleFactor);
-          resizedImageData = nearestNeighborInterpolation(
-            img,
-            scaledWidth,
-            scaledHeight
+        const scaleFactor = this.calculateScaleFactor(img.width, img.height);
+        const scaledWidth = Math.round(
+          img.width * scaleFactor * (this.selectedScale / 100)
+        );
+        const scaledHeight = Math.round(
+          img.height * scaleFactor * (this.selectedScale / 100)
+        );
+        const x = Math.round((canvas.width - scaledWidth) / 2);
+        const y = Math.round((canvas.height - scaledHeight) / 2);
+        // ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+
+        this.imageWidth = scaledWidth;
+        this.imageHeight = scaledHeight;
+        const imageData = ctx.getImageData(x, y, scaledWidth, scaledHeight);
+        if (this.newWidth !== null) {
+          const resizedImageData = nearestNeighborInterpolation(
+            imageData,
+            this.newWidth,
+            this.newHeight
           );
+          if (resizedImageData !== null) {
+            const nx = Math.round((canvas.width - this.newWidth) / 2);
+            const ny = Math.round((canvas.height - this.newHeight) / 2);
+            ctx.putImageData(resizedImageData, nx, ny);
+          }
+        } else {
+          ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
         }
 
-        ctx.putImageData(resizedImageData, 0, 0);
-        this.imageWidth = newWidth;
-        this.imageHeight = newHeight;
         const aspectRatio = this.imageWidth / this.imageHeight;
         this.aspectRatio = aspectRatio;
       };
       img.src = this.selectedImage;
+    },
+    renderImageAlgoritm(img) {
+      const canvas = this.canvasRef;
+      const ctx = this.canvasRef?.getContext("2d");
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = this.canvasRef.clientWidth;
+        canvas.height = this.canvasRef.clientHeight;
+
+        const scaledWidth = Math.round(img.width * (this.selectedScale / 100));
+        const scaledHeight = Math.round(
+          img.height * (this.selectedScale / 100)
+        );
+        const x = Math.round((canvas.width - scaledWidth) / 2);
+        const y = Math.round((canvas.height - scaledHeight) / 2);
+
+        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+        this.imageWidth = scaledWidth;
+        this.imageHeight = scaledHeight;
+      };
+      img.src = this.selectedImage;
+    },
+    handleImageProportions() {
+      if (this.newImg) {
+        this.renderImageAlgoritm(this.newImg);
+      } else {
+        this.renderImage();
+      }
     },
 
     calculateScaleFactor(originalWidth, originalHeight) {
@@ -260,18 +269,17 @@ export default {
     },
     handleModalConfirm() {
       this.scale = 100;
+
       if (this.resizeType === "pixels") {
-        this.renderImage(this.newWidth, this.newHeight);
+        this.newImg = new Image(this.newWidth, this.newHeight);
       }
       if (this.resizeType === "percentage") {
-        const { width, height } = this.canvasRef;
-        this.widthPercent = width;
-        this.heightPercent = height;
-        this.renderImage(
-          (this.newWidth / 100) * this.widthPercent,
-          (this.newHeight / 100) * this.heightPercent
-        );
+        const image = new Image();
+        image.width = (this.newWidth / 100) * this.imageWidth;
+        image.height = (this.newHeight / 100) * this.imageHeight;
+        this.newImg = image;
       }
+      this.closeResizeModal();
     },
     updateModal() {
       if (this.resizeType === "pixels") {
@@ -281,9 +289,10 @@ export default {
         this.aspectRatio = aspectRatio;
       } else if (this.resizeType === "percentage") {
         this.aspectRatio = 1;
-
-        this.newWidth = this.widthPercent;
-        this.newHeight = this.heightPercent;
+        this.widthPercent = this.newWidth;
+        this.heightPercent = this.newHeight;
+        this.newWidth = 100;
+        this.newHeight = 100;
       }
     },
     updateNewWidth(event) {
@@ -318,7 +327,7 @@ export default {
     },
     handleScaleChange(scale) {
       this.selectedScale = scale;
-      this.renderImage(this.selectedImage);
+      this.handleImageProportions(this.selectedImage);
     },
     closeResizeModal() {
       this.isModalVisible = false;
@@ -341,8 +350,6 @@ export default {
 .canvas-editor {
   height: calc(100% - 25px);
 }
-
-/* Добавленные стили для модального окна изменения размера */
 
 .modal {
   display: flex;

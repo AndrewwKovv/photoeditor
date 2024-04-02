@@ -1,31 +1,26 @@
 export function nearestNeighborInterpolation(
-  imageData: ImageData,
+  img: ImageData,
   newWidth: number,
   newHeight: number
-): ImageData {
-  const srcWidth = imageData.width;
-  const srcHeight = imageData.height;
-  const srcData = imageData.data;
+) {
+  const originalWidth = img.width;
+  const originalHeight = img.height;
+  const scaleX = originalWidth / newWidth;
+  const scaleY = originalHeight / newHeight;
+  const newData = new Uint8ClampedArray(newWidth * newHeight * 4);
 
-  const scaleX = srcWidth / newWidth;
-  const scaleY = srcHeight / newHeight;
+  for (let y = 0; y < newHeight; y++) {
+    for (let x = 0; x < newWidth; x++) {
+      const px = Math.floor(x * scaleX);
+      const py = Math.floor(y * scaleY);
+      const index = (y * newWidth + x) * 4;
+      const originalIndex = (py * originalWidth + px) * 4;
 
-  const destData = new Uint8ClampedArray(newWidth * newHeight * 4);
-
-  for (let y = 0; y < newHeight; ++y) {
-    for (let x = 0; x < newWidth; ++x) {
-      const srcX = Math.min(Math.round(x * scaleX), srcWidth - 1);
-      const srcY = Math.min(Math.round(y * scaleY), srcHeight - 1);
-
-      const srcIndex = (srcY * srcWidth + srcX) * 4;
-      const destIndex = (y * newWidth + x) * 4;
-
-      destData[destIndex] = srcData[srcIndex]; // R
-      destData[destIndex + 1] = srcData[srcIndex + 1]; // G
-      destData[destIndex + 2] = srcData[srcIndex + 2]; // B
-      destData[destIndex + 3] = srcData[srcIndex + 3]; // A
+      newData[index] = img.data[originalIndex];
+      newData[index + 1] = img.data[originalIndex + 1];
+      newData[index + 2] = img.data[originalIndex + 2];
+      newData[index + 3] = img.data[originalIndex + 3];
     }
   }
-
-  return new ImageData(destData, newWidth, newHeight);
+  return new ImageData(newData, newWidth, newHeight);
 }
