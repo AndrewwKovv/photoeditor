@@ -135,7 +135,6 @@ export default {
   mounted() {
     this.canvasRef = this.$refs.canvas;
     this.canvasRef.addEventListener("click", this.handleCanvasClick);
-    // this.setupImageWatcher();
   },
   watch: {
     isResizeModalVisible(newValue) {
