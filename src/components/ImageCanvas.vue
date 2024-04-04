@@ -172,8 +172,9 @@ export default {
         const x = Math.round((canvas.width - scaledWidth) / 2);
         const y = Math.round((canvas.height - scaledHeight) / 2);
 
-        this.imageWidth = scaledWidth;
-        this.imageHeight = scaledHeight;
+        this.imageWidth = Math.round(img.width * scaleFactor);
+        this.imageHeight = Math.round(img.height * scaleFactor);
+
         ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
         const aspectRatio = this.imageWidth / this.imageHeight;
         this.aspectRatio = aspectRatio;
@@ -197,8 +198,8 @@ export default {
         const y = Math.round((canvas.height - scaledHeight) / 2);
 
         ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-        this.imageWidth = scaledWidth;
-        this.imageHeight = scaledHeight;
+        this.imageWidth = img.height;
+        this.imageHeight = img.width;
       };
       img.src = this.selectedImage;
     },
@@ -277,7 +278,6 @@ export default {
         this.newHeight
       );
       if (resizedImageData !== null) {
-        // Отрисовка измененного изображения на канве
         canvas.width = this.newWidth;
         canvas.height = this.newHeight;
         ctx.putImageData(resizedImageData, 0, 0);
