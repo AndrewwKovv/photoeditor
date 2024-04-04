@@ -16,13 +16,14 @@
       <div class="modal-content modal-content__wrapper" @click.stop>
         <h2>Изменение размера изображения</h2>
         <div class="modal-content__item">
-          <label for="resize-type">Тип изменения:</label>
+          <label for="resizeType">Тип изменения:</label>
           <select
             v-model="resizeType"
-            id="resize-type"
+            id="resizeType"
             class="transparent-input"
+            @change="updateModal($event)"
           >
-            <option value="percent">Проценты</option>
+            <option value="percentage">Проценты</option>
             <option value="pixels">Пиксели</option>
           </select>
         </div>
@@ -30,40 +31,40 @@
           <label for="width">Ширина:</label>
           <input
             type="number"
-            v-model.number="newWidth"
+            :value="newWidth"
             id="width"
             min="1"
             class="transparent-input"
+            @change="updateNewWidth"
           />
         </div>
         <div class="modal-content__item">
           <label for="height">Высота:</label>
           <input
             type="number"
-            v-model.number="newHeight"
+            :value="newHeight"
             id="height"
             min="1"
             class="transparent-input"
+            @change="updateNewHeight"
           />
         </div>
         <div class="modal-content__item">
           <p>
             Общее количество пикселей до изменения размера:
-            {{ (imageWidth * imageHeight) / 1000000 }} мегапикселей
+            {{ ((imageWidth * imageHeight) / 1000000).toFixed(4) }} мегапикселей
           </p>
           <p>
             Общее количество пикселей после изменения размера:
-            {{
-              ((newWidth || imageWidth) * (newHeight || imageHeight)) / 1000000
-            }}
+            {{ countPixels() }}
             мегапикселей
           </p>
         </div>
         <div class="modal-content__item modal-content__ratio">
-          <label class="modal-content__ratio-btn" for="maintain-aspect-ratio">
+          <label class="modal-content__ratio-btn" for="maintainAspectRatio">
             <input
               type="checkbox"
-              id="maintain-aspect-ratio"
+              id="maintainAspectRatio"
               v-model="maintainAspectRatio"
             />
             Сохранить пропорции
@@ -76,16 +77,17 @@
             id="interpolation-algorithm"
             class="transparent-input"
           >
-            <option value="nearest-neighbor">Ближайший сосед</option>
+            <option
+              value="nearest-neighbor"
+              title="Алгоритм ближайшего соседа используется для изменения размера изображения путем выбора цвета пикселя из оригинального 
+  изображения, наиболее близкого к центру пикселя в новом изображении."
+            >
+              Ближайший сосед
+            </option>
           </select>
-          <span class="tooltip"
-            >Алгоритм ближайшего соседа используется для изменения размера
-            изображения путем выбора цвета пикселя из оригинального изображения,
-            наиболее близкого к центру пикселя в новом изображении.</span
-          >
         </div>
         <div class="modal-content__item modal-content__button">
-          <button @click="resizeImage">Изменить размер</button>
+          <button @click="handleModalConfirm">Изменить размер</button>
           <button @click="closeResizeModal">Отмена</button>
         </div>
       </div>
@@ -95,6 +97,7 @@
 
 <script>
 import ImageFooter from "./ImageFooter.vue";
+import { nearestNeighborInterpolation } from "@/nearestNeighborInterpolation.ts";
 import { watch } from "vue";
 
 export default {
@@ -111,14 +114,17 @@ export default {
       selectedPixel: { x: 0, y: 0 },
       imageUrl: "",
       canvasRef: null,
+      newImg: null,
       selectedScale: 100,
       isModalVisible: this.isResizeModalVisible,
       interpolationAlgorithm: "nearest-neighbor",
-      resizeType: "percent", // Добавлено объявление переменной для типа изменения
-      newWidth: null, // Добавлено объявление переменной для новой ширины
-      newHeight: null, // Добавлено объявление переменной для новой высоты
+      resizeType: "pixels",
+      newWidth: null,
+      newHeight: null,
       maintainAspectRatio: false,
       aspectRatio: 1,
+      widthPercent: null,
+      heightPercent: null,
     };
   },
   props: {
@@ -129,47 +135,94 @@ export default {
   mounted() {
     this.canvasRef = this.$refs.canvas;
     this.canvasRef.addEventListener("click", this.handleCanvasClick);
-    this.setupImageWatcher();
+    // this.setupImageWatcher();
   },
   watch: {
     isResizeModalVisible(newValue) {
       this.isModalVisible = newValue;
+      this.updateModal();
+    },
+    selectedImage() {
+      this.selectedScale = 100;
+      this.handleImageProportions();
+    },
+    newImg: {
+      handler() {
+        this.handleImageProportions();
+      },
+      deep: true,
     },
   },
   methods: {
-    setupImageWatcher() {
-      watch(
-        () => this.selectedImage,
-        (imageData) => {
-          if (imageData) {
-            this.renderImage(imageData);
-          }
-        }
-      );
-    },
-    renderImage(imageUrl) {
+    renderImage() {
       const img = new Image();
-      const canvas = this.$refs.canvas;
+      const canvas = this.canvasRef;
       const ctx = this.canvasRef?.getContext("2d");
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = this.canvasRef.clientWidth;
         canvas.height = this.canvasRef.clientHeight;
-        const scaleFactor = this.selectedScale / 100; // масштабный коэффициент
 
-        const scaledWidth = img.width * scaleFactor;
-        const scaledHeight = img.height * scaleFactor;
+        const scaleFactor = this.calculateScaleFactor(img.width, img.height);
+        const scaledWidth = Math.round(
+          img.width * scaleFactor * (this.selectedScale / 100)
+        );
+        const scaledHeight = Math.round(
+          img.height * scaleFactor * (this.selectedScale / 100)
+        );
+        const x = Math.round((canvas.width - scaledWidth) / 2);
+        const y = Math.round((canvas.height - scaledHeight) / 2);
 
-        const x = (canvas.width - scaledWidth) / 2;
-        const y = (canvas.height - scaledHeight) / 2;
+        this.imageWidth = scaledWidth;
+        this.imageHeight = scaledHeight;
+        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+        const aspectRatio = this.imageWidth / this.imageHeight;
+        this.aspectRatio = aspectRatio;
+      };
+      img.src = this.selectedImage;
+    },
+    renderImageAlgoritm(img) {
+      const canvas = this.canvasRef;
+      const ctx = this.canvasRef?.getContext("2d");
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = this.canvasRef.clientWidth;
+        canvas.height = this.canvasRef.clientHeight;
+        // ctx.imageSmoothingEnabled = false;
+
+        const scaledWidth = Math.round(img.width * (this.selectedScale / 100));
+        const scaledHeight = Math.round(
+          img.height * (this.selectedScale / 100)
+        );
+        const x = Math.round((canvas.width - scaledWidth) / 2);
+        const y = Math.round((canvas.height - scaledHeight) / 2);
 
         ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-
-        this.imageWidth = scaledWidth; // обновление ширины изображения
-        this.imageHeight = scaledHeight; // обновление высоты изображения
+        this.imageWidth = scaledWidth;
+        this.imageHeight = scaledHeight;
       };
-      img.src = imageUrl;
+      img.src = this.selectedImage;
     },
+    handleImageProportions() {
+      if (this.newImg) {
+        this.renderImageAlgoritm(this.newImg);
+      } else {
+        this.renderImage();
+      }
+    },
+
+    calculateScaleFactor(originalWidth, originalHeight) {
+      const canvas = this.$refs.canvas;
+      const minMargin = 50;
+      const availableWidth = canvas.width - 2 * minMargin;
+      const availableHeight = canvas.height - 2 * minMargin;
+
+      const widthScaleFactor = availableWidth / originalWidth;
+      const heightScaleFactor = availableHeight / originalHeight;
+
+      return Math.min(widthScaleFactor, heightScaleFactor);
+    },
+
     handleCanvasClick(event) {
       const canvasRect = this.$refs.canvas.getBoundingClientRect();
       const canvasOffsetX = (this.canvasRef.clientWidth - this.imageWidth) / 2;
@@ -199,41 +252,115 @@ export default {
       const b = pixelData[2];
       this.selectedColor = { r, g, b };
     },
+    handleModalConfirm() {
+      this.scale = 100;
+
+      if (this.resizeType === "pixels") {
+        this.newImg = new Image(this.newWidth, this.newHeight);
+      }
+      if (this.resizeType === "percentage") {
+        const image = new Image();
+        image.width = (this.newWidth / 100) * this.imageWidth;
+        image.height = (this.newHeight / 100) * this.imageHeight;
+        this.newImg = image;
+      }
+      const canvas = this.canvasRef;
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.getImageData(
+        0,
+        0,
+        this.imageWidth,
+        this.imageHeight
+      );
+      const resizedImageData = nearestNeighborInterpolation(
+        imageData,
+        this.newWidth,
+        this.newHeight
+      );
+      if (resizedImageData !== null) {
+        // Отрисовка измененного изображения на канве
+        canvas.width = this.newWidth;
+        canvas.height = this.newHeight;
+        ctx.putImageData(resizedImageData, 0, 0);
+      }
+      this.closeResizeModal();
+    },
+    updateModal() {
+      if (this.resizeType === "pixels") {
+        this.newWidth = this.imageWidth;
+        this.newHeight = this.imageHeight;
+        const aspectRatio = this.imageWidth / this.imageHeight;
+        this.aspectRatio = aspectRatio;
+      } else if (this.resizeType === "percentage") {
+        this.aspectRatio = 1;
+        this.widthPercent = this.newWidth;
+        this.heightPercent = this.newHeight;
+        this.newWidth = 100;
+        this.newHeight = 100;
+      }
+    },
+    updateNewWidth(event) {
+      let value = Math.floor(+event.target.value); // Преобразование в число и округление в меньшую сторону
+      if (value <= 0) value = 1; // Убеждаемся, что значение не меньше 1
+      if (value > 7680) value = 7680; // Ограничиваем значение до 7680 (ширина 8K)
+      this.newWidth = value;
+      if (this.maintainAspectRatio) {
+        this.newHeight = Math.round(value / this.aspectRatio);
+      }
+    },
+
+    updateNewHeight(event) {
+      let value = Math.floor(+event.target.value); // Преобразование в число и округление в меньшую сторону
+      if (value <= 0) value = 1; // Убеждаемся, что значение не меньше 1
+      if (value > 4320) value = 4320; // Ограничиваем значение до 4320 (высота 8K)
+      this.newHeight = value;
+      if (this.maintainAspectRatio) {
+        this.newWidth = Math.round(value * this.aspectRatio);
+      }
+    },
+    countPixels() {
+      if (this.resizeType === "pixels") {
+        return ((this.newWidth * this.newHeight) / 1000000).toFixed(4);
+      }
+      if (this.resizeType === "percentage") {
+        const width = this.imageWidth;
+        const height = this.imageHeight;
+        const percentage = width * height;
+        return (
+          ((this.newWidth / 100) * (this.newHeight / 100) * percentage) /
+          1000000
+        ).toFixed(4);
+      }
+    },
     handleScaleChange(scale) {
       this.selectedScale = scale;
-      this.renderImage(this.selectedImage);
+      this.handleImageProportions();
     },
     closeResizeModal() {
       this.isModalVisible = false;
       this.$emit("closeResizeModal");
+      this.$emit("update:activeTool", "");
     },
-    resizeImage() {
-      let newWidth = this.newWidth;
-      let newHeight = this.newHeight;
 
-      // Проверка сохранения пропорций
-      if (this.maintainAspectRatio) {
-        const aspectRatio = this.imageWidth / this.imageHeight;
-        if (newWidth && newHeight) {
-          if (newWidth !== Math.round(newHeight * aspectRatio)) {
-            // Если ширина не соответствует пропорции, то пересчитываем высоту
-            newHeight = Math.round(newWidth / aspectRatio);
-          } else if (newHeight !== Math.round(newWidth / aspectRatio)) {
-            // Если высота не соответствует пропорции, то пересчитываем ширину
-            newWidth = Math.round(newHeight * aspectRatio);
-          }
-        } else if (newWidth) {
-          newHeight = Math.round(newWidth / aspectRatio);
-        } else if (newHeight) {
-          newWidth = Math.round(newHeight * aspectRatio);
-        }
-      }
-
-      // Обработка изменения размера изображения
-      console.log("New Width:", newWidth);
-      console.log("New Height:", newHeight);
-      // Закрыть модальное окно после изменения размера
-      this.closeResizeModal();
+    // Сохранение
+    saveImage() {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = this.imageWidth;
+      canvas.height = this.imageHeight;
+      ctx.drawImage(
+        this.newImg || this.$refs.canvas,
+        0,
+        0,
+        this.imageWidth,
+        this.imageHeight
+      );
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = "my_image.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     },
   },
 };
@@ -247,11 +374,10 @@ export default {
   height: 100vh;
   flex: 1;
 }
+
 .canvas-editor {
   height: calc(100% - 25px);
 }
-
-/* Добавленные стили для модального окна изменения размера */
 
 .modal {
   display: flex;
@@ -262,7 +388,8 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Прозрачный черный фон */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Прозрачный черный фон */
   z-index: 1000;
 }
 
@@ -298,10 +425,12 @@ export default {
   display: flex;
   align-items: center;
 }
+
 .modal-content__ratio .modal-content__ratio-btn {
   display: flex;
   align-items: center;
 }
+
 .modal-content__ratio .modal-content__ratio-btn input[type="checkbox"] {
   margin-right: 5px;
   flex-shrink: 0;
