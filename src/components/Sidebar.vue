@@ -25,7 +25,7 @@
         >{{ tool.name }}</span
       >
     </div>
-    <div @click="saveCanvasImage">
+    <div @click="saveImage">
       <img
         src="../assets/icons/Icon/W95-139.png"
         alt="Save images"
@@ -142,15 +142,8 @@ export default {
       this.imageUrl = "";
       this.closeModal();
     },
-    saveCanvasImage() {
-      const canvas = document.getElementById("canvas");
-      const imageDataURL = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = imageDataURL;
-      link.download = "my_img.png";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    saveImage() {
+      this.$emit("save-image");
     },
   },
   beforeUnmount() {

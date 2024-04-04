@@ -5,6 +5,7 @@
         v-model:activeTool="activeTool"
         @image-selected="handleImageSelected"
         @openResizeModal="handleOpenResizeModal"
+        @save-image="saveImage"
       />
       <ImageCanvas
         :activeTool="activeTool"
@@ -12,6 +13,7 @@
         @color-selected="handleColorSelected"
         :isResizeModalVisible="isResizeModalVisible"
         @closeResizeModal="handleCloseResizeModal"
+        ref="imageCanvas"
       />
     </div>
   </div>
@@ -47,6 +49,9 @@ export default {
     },
     handleCloseResizeModal() {
       this.isResizeModalVisible = false;
+    },
+    saveImage() {
+      this.$refs.imageCanvas.saveImage();
     },
   },
 };

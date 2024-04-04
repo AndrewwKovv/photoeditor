@@ -52,7 +52,7 @@
         <div class="modal-content__item">
           <p>
             Общее количество пикселей до изменения размера:
-            {{ (imageWidth * imageHeight) / 1000000 }} мегапикселей
+            {{ ((imageWidth * imageHeight) / 1000000).toFixed(4) }} мегапикселей
           </p>
           <p>
             Общее количество пикселей после изменения размера:
@@ -172,26 +172,10 @@ export default {
         );
         const x = Math.round((canvas.width - scaledWidth) / 2);
         const y = Math.round((canvas.height - scaledHeight) / 2);
-        // ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
 
         this.imageWidth = scaledWidth;
         this.imageHeight = scaledHeight;
-        const imageData = ctx.getImageData(x, y, scaledWidth, scaledHeight);
-        if (this.newWidth !== null) {
-          const resizedImageData = nearestNeighborInterpolation(
-            imageData,
-            this.newWidth,
-            this.newHeight
-          );
-          if (resizedImageData !== null) {
-            const nx = Math.round((canvas.width - this.newWidth) / 2);
-            const ny = Math.round((canvas.height - this.newHeight) / 2);
-            ctx.putImageData(resizedImageData, nx, ny);
-          }
-        } else {
-          ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-        }
-
+        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
         const aspectRatio = this.imageWidth / this.imageHeight;
         this.aspectRatio = aspectRatio;
       };
@@ -204,6 +188,7 @@ export default {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = this.canvasRef.clientWidth;
         canvas.height = this.canvasRef.clientHeight;
+        // ctx.imageSmoothingEnabled = false;
 
         const scaledWidth = Math.round(img.width * (this.selectedScale / 100));
         const scaledHeight = Math.round(
@@ -279,6 +264,25 @@ export default {
         image.height = (this.newHeight / 100) * this.imageHeight;
         this.newImg = image;
       }
+      const canvas = this.canvasRef;
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.getImageData(
+        0,
+        0,
+        this.imageWidth,
+        this.imageHeight
+      );
+      const resizedImageData = nearestNeighborInterpolation(
+        imageData,
+        this.newWidth,
+        this.newHeight
+      );
+      if (resizedImageData !== null) {
+        // Отрисовка измененного изображения на канве
+        canvas.width = this.newWidth;
+        canvas.height = this.newHeight;
+        ctx.putImageData(resizedImageData, 0, 0);
+      }
       this.closeResizeModal();
     },
     updateModal() {
@@ -296,16 +300,19 @@ export default {
       }
     },
     updateNewWidth(event) {
-      let value = +event.target.value;
-      if (value <= 0) value = 1;
+      let value = Math.floor(+event.target.value); // Преобразование в число и округление в меньшую сторону
+      if (value <= 0) value = 1; // Убеждаемся, что значение не меньше 1
+      if (value > 7680) value = 7680; // Ограничиваем значение до 7680 (ширина 8K)
       this.newWidth = value;
       if (this.maintainAspectRatio) {
         this.newHeight = Math.round(value / this.aspectRatio);
       }
     },
+
     updateNewHeight(event) {
-      let value = +event.target.value;
-      if (value <= 0) value = 1;
+      let value = Math.floor(+event.target.value); // Преобразование в число и округление в меньшую сторону
+      if (value <= 0) value = 1; // Убеждаемся, что значение не меньше 1
+      if (value > 4320) value = 4320; // Ограничиваем значение до 4320 (высота 8K)
       this.newHeight = value;
       if (this.maintainAspectRatio) {
         this.newWidth = Math.round(value * this.aspectRatio);
@@ -327,12 +334,33 @@ export default {
     },
     handleScaleChange(scale) {
       this.selectedScale = scale;
-      this.handleImageProportions(this.selectedImage);
+      this.handleImageProportions();
     },
     closeResizeModal() {
       this.isModalVisible = false;
       this.$emit("closeResizeModal");
       this.$emit("update:activeTool", "");
+    },
+
+    // Сохранение
+    saveImage() {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = this.imageWidth;
+      canvas.height = this.imageHeight;
+      ctx.drawImage(
+        this.newImg || this.$refs.canvas,
+        0,
+        0,
+        this.imageWidth,
+        this.imageHeight
+      );
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = "my_image.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     },
   },
 };
