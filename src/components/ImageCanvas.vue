@@ -49,17 +49,6 @@
             @change="updateNewHeight"
           />
         </div>
-        <div class="modal-content__item">
-          <p>
-            Общее количество пикселей до изменения размера:
-            {{ ((imageWidth * imageHeight) / 1000000).toFixed(4) }} мегапикселей
-          </p>
-          <p>
-            Общее количество пикселей после изменения размера:
-            {{ countPixels() }}
-            мегапикселей
-          </p>
-        </div>
         <div class="modal-content__item modal-content__ratio">
           <label class="modal-content__ratio-btn" for="maintainAspectRatio">
             <input
@@ -69,6 +58,17 @@
             />
             Сохранить пропорции
           </label>
+        </div>
+        <div class="modal-content__item">
+          <p>
+            Размер до:
+            {{ ((imageWidth * imageHeight) / 1000000).toFixed(4) }} Мп
+          </p>
+          <p>
+            Размер после:
+            {{ countPixels() }}
+            Мп
+          </p>
         </div>
         <div class="modal-content__item">
           <label for="interpolation-algorithm">Алгоритм интерполяции:</label>
@@ -188,7 +188,7 @@ export default {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         canvas.width = this.canvasRef.clientWidth;
         canvas.height = this.canvasRef.clientHeight;
-        // ctx.imageSmoothingEnabled = false;
+        ctx.imageSmoothingEnabled = false;
 
         const scaledWidth = Math.round(img.width * (this.selectedScale / 100));
         const scaledHeight = Math.round(
@@ -393,7 +393,7 @@ export default {
 }
 
 .transparent-input {
-  width: 100%;
+  width: 65%;
   padding: 5px;
   margin-top: 5px;
   border: 1px solid #fff;
@@ -411,13 +411,19 @@ export default {
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  max-width: 570px;
+  max-width: 420px;
   width: 100%;
   color: #fff;
 }
 
 .modal-content__item {
   margin-bottom: 15px;
+  display: flex;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
 
 .modal-content__ratio {
