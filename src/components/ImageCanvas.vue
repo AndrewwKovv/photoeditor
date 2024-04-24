@@ -1,6 +1,15 @@
 <template>
   <div class="canvas-container">
-    <canvas id="canvas" class="canvas-editor" ref="canvas"></canvas>
+    <div class="wrapper">
+      <canvas id="canvas" class="canvas-editor" ref="canvas"></canvas>
+      <ModalColor
+        v-if="colorInfoPanelVisible"
+        :selectedColor="selectedColors"
+        :xMouse="selectedPixel.x"
+        :yMouse="selectedPixel.y"
+        @closeSetting="colorInfoPanelVisible = false"
+      />
+    </div>
 
     <ImageFooter
       :imageWidth="imageWidth"
@@ -97,6 +106,7 @@
 
 <script>
 import ImageFooter from "./ImageFooter.vue";
+import ModalColor from "./ModalColor.vue";
 import { nearestNeighborInterpolation } from "@/nearestNeighborInterpolation.ts";
 import { watch } from "vue";
 
@@ -104,6 +114,7 @@ export default {
   name: "ImageCanvas",
   components: {
     ImageFooter,
+    ModalColor,
   },
   emits: ["closeResizeModal"],
   data() {
@@ -111,6 +122,7 @@ export default {
       imageWidth: 0,
       imageHeight: 0,
       selectedColor: null,
+      selectedColors: "",
       selectedPixel: { x: 0, y: 0 },
       imageUrl: "",
       canvasRef: null,
@@ -125,6 +137,7 @@ export default {
       aspectRatio: 1,
       widthPercent: null,
       heightPercent: null,
+      colorInfoPanelVisible: true,
     };
   },
   props: {
@@ -144,6 +157,11 @@ export default {
     selectedImage() {
       this.selectedScale = 100;
       this.handleImageProportions();
+    },
+    activeTool(newValue) {
+      if (newValue === "Пипетка") {
+        this.colorInfoPanelVisible = true;
+      }
     },
     newImg: {
       handler() {
@@ -198,8 +216,8 @@ export default {
         const y = Math.round((canvas.height - scaledHeight) / 2);
 
         ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-        this.imageWidth = img.height;
-        this.imageHeight = img.width;
+        this.imageWidth = img.width;
+        this.imageHeight = img.height;
       };
       img.src = this.selectedImage;
     },
@@ -250,6 +268,7 @@ export default {
       const r = pixelData[0];
       const g = pixelData[1];
       const b = pixelData[2];
+      this.selectedColors = `rgb(${r}, ${g}, ${b})`;
       this.selectedColor = { r, g, b };
     },
     handleModalConfirm() {
@@ -376,6 +395,11 @@ export default {
 
 .canvas-editor {
   height: calc(100% - 25px);
+}
+
+.wrapper {
+  display: flex;
+  justify-content: space-between;
 }
 
 .modal {

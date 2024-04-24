@@ -14,6 +14,7 @@
       :class="{ active: activeTool === tool.name }"
     >
       <img
+        class="tool__icon"
         :src="tool.icon"
         :alt="tool.name"
         @mouseover="showTooltip(tool.name)"
@@ -29,6 +30,7 @@
       <img
         src="../assets/icons/Icon/W95-139.png"
         alt="Save images"
+        title="Скачать изображение"
         class="file-upload-icon"
       />
     </div>
@@ -88,6 +90,11 @@ export default {
           id: 2,
           name: "Изменение размера",
           icon: require("../assets/icons/Icon/W95-82.png"),
+        },
+        {
+          id: 3,
+          name: "Рука",
+          icon: require("../assets/icons/Icon/W95-104.png"),
         },
       ],
       showTooltipFlag: false,
@@ -214,7 +221,10 @@ export default {
   margin: auto;
   padding: 20px;
 }
-
+.tool__icon {
+  width: 23px;
+  height: 21px;
+}
 .upload__cont {
   display: flex;
   align-items: center;
