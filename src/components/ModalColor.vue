@@ -39,8 +39,8 @@
       >
         RGB
         <span class="tooltip" v-if="showTooltipFlag"
-          >Color model combining red, green, and blue light intensities to
-          create colors in digital displays.</span
+          >Цветовая модель, сочетающая интенсивность красного, зеленого и синего
+          света для создания цветов на цифровых дисплеях.</span
         >
       </p>
       <div class="color-parameters">
@@ -54,8 +54,9 @@
       >
         XYZ
         <span class="tooltip" v-if="showTooltipFlag"
-          >Standard color space representing human visual perception of colors,
-          used as a foundation for other color spaces.</span
+          >Стандартное цветовое пространство, представляющее зрительное
+          восприятие цветов человеком, используется в качестве основы для других
+          цветовых пространств.</span
         >
       </p>
       <div class="color-parameters">
@@ -69,9 +70,10 @@
       >
         Lab
         <span class="tooltip" v-if="showTooltipFlag"
-          >Perceptually uniform color space with components for lightness (L*)
-          and color opponent axes (a*, b*), ideal for accurate color
-          reproduction and correction.</span
+          >Визуально однородное цветовое пространство с компонентами,
+          отвечающими за яркость (L*) и цветовыми координатами (a*, b*),
+          идеально подходит для точного воспроизведения и коррекции цвета
+          .</span
         >
       </p>
       <div class="color-parameters">
@@ -84,7 +86,7 @@
       v-if="contrast"
       :style="{ color: contrast < 4.5 ? 'red' : 'white' }"
     >
-      Contrast: {{ contrast }}:1
+      Контраст: {{ contrast }}:1
     </div>
   </aside>
 </template>
