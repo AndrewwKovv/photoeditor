@@ -1,7 +1,15 @@
 <template>
   <div class="canvas-container">
     <div class="wrapper">
-      <canvas id="canvas" class="canvas-editor" ref="canvas"></canvas>
+      <canvas
+        id="canvas"
+        class="canvas-editor"
+        ref="canvas"
+        @mousedown="handleMouseDown"
+        @mousemove="handleMouseMove"
+        @mouseup="handleMouseUp"
+        @mouseleave="handleMouseLeave"
+      ></canvas>
       <ModalColor
         v-if="colorInfoPanelVisible"
         :selectedColor="selectedColors"
@@ -138,6 +146,9 @@ export default {
       widthPercent: null,
       heightPercent: null,
       colorInfoPanelVisible: true,
+      canvasOffsetX: 0,
+      canvasOffsetY: 0,
+      dragging: false,
     };
   },
   props: {
@@ -148,6 +159,12 @@ export default {
   mounted() {
     this.canvasRef = this.$refs.canvas;
     this.canvasRef.addEventListener("click", this.handleCanvasClick);
+    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keyup", this.handleKeyUp);
+  },
+  beforeUnmount() {
+    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("keyup", this.handleKeyUp);
   },
   watch: {
     isResizeModalVisible(newValue) {
@@ -171,14 +188,89 @@ export default {
     },
   },
   methods: {
+    handleMouseDown(event) {
+      if (this.activeTool === "Рука") {
+        this.dragging = true;
+        this.lastX = event.clientX;
+        this.lastY = event.clientY;
+        event.preventDefault();
+      }
+    },
+    handleMouseMove(event) {
+      if (this.dragging) {
+        const dx = event.clientX - this.lastX;
+        const dy = event.clientY - this.lastY;
+
+        this.lastX = event.clientX;
+        this.lastY = event.clientY;
+
+        this.canvasRef.style.cursor = "grabbing";
+
+        // Обновление положения изображения без очистки и перерисовки
+        this.canvasOffsetX += dx;
+        this.canvasOffsetY += dy;
+
+        // Перерисовка изображения с новыми координатами
+        this.renderImage();
+
+        event.preventDefault();
+      }
+    },
+    handleMouseUp(event) {
+      if (this.dragging && this.activeTool === "Рука") {
+        this.dragging = false;
+        this.canvasRef.style.cursor = "grab";
+        event.preventDefault();
+      }
+    },
+    handleMouseLeave(event) {
+      if (this.dragging && this.activeTool === "Рука") {
+        this.dragging = false;
+        this.canvasRef.style.cursor = "grab";
+        event.preventDefault();
+      }
+    },
+    handleKeyDown(event) {
+      if (this.activeTool === "Рука" && !this.dragging) {
+        const shiftModifier = event.shiftKey ? 5 : 1; // Ускорение при зажатом Shift
+        switch (event.key) {
+          case "ArrowLeft":
+            this.canvasOffsetX -= 10 * shiftModifier;
+            this.renderImage();
+            break;
+          case "ArrowRight":
+            this.canvasOffsetX += 10 * shiftModifier;
+            this.renderImage();
+            break;
+          case "ArrowUp":
+            this.canvasOffsetY -= 10 * shiftModifier;
+            this.renderImage();
+            break;
+          case "ArrowDown":
+            this.canvasOffsetY += 10 * shiftModifier;
+            this.renderImage();
+            break;
+        }
+      }
+    },
+    handleKeyUp(event) {
+      if (event.key.startsWith("Arrow")) {
+        this.renderImage();
+      }
+    },
     renderImage() {
       const img = new Image();
       const canvas = this.canvasRef;
       const ctx = this.canvasRef?.getContext("2d");
+      const scrollX = this.$refs.canvas.parentNode.scrollLeft;
+      const scrollY = this.$refs.canvas.parentNode.scrollTop;
+      const canvasWidth = this.canvasRef.clientWidth;
+      const canvasHeight = this.canvasRef.clientHeight;
+
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.width = this.canvasRef.clientWidth;
-        canvas.height = this.canvasRef.clientHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
 
         const scaleFactor = this.calculateScaleFactor(img.width, img.height);
         const scaledWidth = Math.round(
@@ -187,8 +279,23 @@ export default {
         const scaledHeight = Math.round(
           img.height * scaleFactor * (this.selectedScale / 100)
         );
-        const x = Math.round((canvas.width - scaledWidth) / 2);
-        const y = Math.round((canvas.height - scaledHeight) / 2);
+
+        let x =
+          Math.round((canvasWidth - scaledWidth) / 2) +
+          this.canvasOffsetX -
+          scrollX;
+        let y =
+          Math.round((canvasHeight - scaledHeight) / 2) +
+          this.canvasOffsetY -
+          scrollY;
+
+        // Добавляем отступы
+        const margin = 10;
+        x = Math.min(Math.max(x, -scaledWidth + margin), canvasWidth - margin);
+        y = Math.min(
+          Math.max(y, -scaledHeight + margin),
+          canvasHeight - margin
+        );
 
         this.imageWidth = Math.round(img.width * scaleFactor);
         this.imageHeight = Math.round(img.height * scaleFactor);
@@ -197,8 +304,10 @@ export default {
         const aspectRatio = this.imageWidth / this.imageHeight;
         this.aspectRatio = aspectRatio;
       };
+
       img.src = this.selectedImage;
     },
+
     renderImageAlgoritm(img) {
       const canvas = this.canvasRef;
       const ctx = this.canvasRef?.getContext("2d");
@@ -301,6 +410,12 @@ export default {
         canvas.height = this.newHeight;
         ctx.putImageData(resizedImageData, 0, 0);
       }
+
+      // Обновляем размеры и положение канваса
+      this.canvasOffsetX = 0;
+      this.canvasOffsetY = 0;
+      this.renderImage();
+
       this.closeResizeModal();
     },
     updateModal() {
@@ -394,7 +509,7 @@ export default {
 }
 
 .canvas-editor {
-  height: calc(100% - 25px);
+  height: 100%;
 }
 
 .wrapper {
