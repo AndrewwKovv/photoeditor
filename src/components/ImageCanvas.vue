@@ -9,7 +9,6 @@
         @mousemove="handleMouseMove"
         @mouseup="handleMouseUp"
         @mouseleave="handleMouseLeave"
-        @wheel="handleMouseWheel"
       ></canvas>
       <ModalColor
         v-if="colorInfoPanelVisible"
@@ -233,21 +232,22 @@ export default {
     },
     handleKeyDown(event) {
       if (this.activeTool === "Рука" && !this.dragging) {
+        const shiftModifier = event.shiftKey ? 5 : 1; // Ускорение при зажатом Shift
         switch (event.key) {
           case "ArrowLeft":
-            this.canvasOffsetX -= 10;
+            this.canvasOffsetX -= 10 * shiftModifier;
             this.renderImage();
             break;
           case "ArrowRight":
-            this.canvasOffsetX += 10;
+            this.canvasOffsetX += 10 * shiftModifier;
             this.renderImage();
             break;
           case "ArrowUp":
-            this.canvasOffsetY -= 10;
+            this.canvasOffsetY -= 10 * shiftModifier;
             this.renderImage();
             break;
           case "ArrowDown":
-            this.canvasOffsetY += 10;
+            this.canvasOffsetY += 10 * shiftModifier;
             this.renderImage();
             break;
         }
@@ -262,10 +262,15 @@ export default {
       const img = new Image();
       const canvas = this.canvasRef;
       const ctx = this.canvasRef?.getContext("2d");
+      const scrollX = this.$refs.canvas.parentNode.scrollLeft;
+      const scrollY = this.$refs.canvas.parentNode.scrollTop;
+      const canvasWidth = this.canvasRef.clientWidth;
+      const canvasHeight = this.canvasRef.clientHeight;
+
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        canvas.width = this.canvasRef.clientWidth;
-        canvas.height = this.canvasRef.clientHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
 
         const scaleFactor = this.calculateScaleFactor(img.width, img.height);
         const scaledWidth = Math.round(
@@ -275,10 +280,22 @@ export default {
           img.height * scaleFactor * (this.selectedScale / 100)
         );
 
-        const x =
-          Math.round((canvas.width - scaledWidth) / 2) + this.canvasOffsetX;
-        const y =
-          Math.round((canvas.height - scaledHeight) / 2) + this.canvasOffsetY;
+        let x =
+          Math.round((canvasWidth - scaledWidth) / 2) +
+          this.canvasOffsetX -
+          scrollX;
+        let y =
+          Math.round((canvasHeight - scaledHeight) / 2) +
+          this.canvasOffsetY -
+          scrollY;
+
+        // Добавляем отступы
+        const margin = 10;
+        x = Math.min(Math.max(x, -scaledWidth + margin), canvasWidth - margin);
+        y = Math.min(
+          Math.max(y, -scaledHeight + margin),
+          canvasHeight - margin
+        );
 
         this.imageWidth = Math.round(img.width * scaleFactor);
         this.imageHeight = Math.round(img.height * scaleFactor);
@@ -287,6 +304,7 @@ export default {
         const aspectRatio = this.imageWidth / this.imageHeight;
         this.aspectRatio = aspectRatio;
       };
+
       img.src = this.selectedImage;
     },
 
@@ -392,6 +410,12 @@ export default {
         canvas.height = this.newHeight;
         ctx.putImageData(resizedImageData, 0, 0);
       }
+
+      // Обновляем размеры и положение канваса
+      this.canvasOffsetX = 0;
+      this.canvasOffsetY = 0;
+      this.renderImage();
+
       this.closeResizeModal();
     },
     updateModal() {
