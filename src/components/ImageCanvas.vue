@@ -1,7 +1,16 @@
 <template>
   <div class="canvas-container">
     <div class="wrapper">
-      <canvas id="canvas" class="canvas-editor" ref="canvas"></canvas>
+      <canvas
+        id="canvas"
+        class="canvas-editor"
+        ref="canvas"
+        @mousedown="handleMouseDown"
+        @mousemove="handleMouseMove"
+        @mouseup="handleMouseUp"
+        @mouseleave="handleMouseLeave"
+        @wheel="handleMouseWheel"
+      ></canvas>
       <ModalColor
         v-if="colorInfoPanelVisible"
         :selectedColor="selectedColors"
@@ -138,6 +147,9 @@ export default {
       widthPercent: null,
       heightPercent: null,
       colorInfoPanelVisible: true,
+      canvasOffsetX: 0,
+      canvasOffsetY: 0,
+      dragging: false,
     };
   },
   props: {
@@ -148,6 +160,12 @@ export default {
   mounted() {
     this.canvasRef = this.$refs.canvas;
     this.canvasRef.addEventListener("click", this.handleCanvasClick);
+    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keyup", this.handleKeyUp);
+  },
+  beforeUnmount() {
+    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("keyup", this.handleKeyUp);
   },
   watch: {
     isResizeModalVisible(newValue) {
@@ -171,6 +189,75 @@ export default {
     },
   },
   methods: {
+    handleMouseDown(event) {
+      if (this.activeTool === "Рука") {
+        this.dragging = true;
+        this.lastX = event.clientX;
+        this.lastY = event.clientY;
+        event.preventDefault();
+      }
+    },
+    handleMouseMove(event) {
+      if (this.dragging) {
+        const dx = event.clientX - this.lastX;
+        const dy = event.clientY - this.lastY;
+
+        this.lastX = event.clientX;
+        this.lastY = event.clientY;
+
+        this.canvasRef.style.cursor = "grabbing";
+
+        // Обновление положения изображения без очистки и перерисовки
+        this.canvasOffsetX += dx;
+        this.canvasOffsetY += dy;
+
+        // Перерисовка изображения с новыми координатами
+        this.renderImage();
+
+        event.preventDefault();
+      }
+    },
+    handleMouseUp(event) {
+      if (this.dragging && this.activeTool === "Рука") {
+        this.dragging = false;
+        this.canvasRef.style.cursor = "grab";
+        event.preventDefault();
+      }
+    },
+    handleMouseLeave(event) {
+      if (this.dragging && this.activeTool === "Рука") {
+        this.dragging = false;
+        this.canvasRef.style.cursor = "grab";
+        event.preventDefault();
+      }
+    },
+    handleKeyDown(event) {
+      if (this.activeTool === "Рука" && !this.dragging) {
+        switch (event.key) {
+          case "ArrowLeft":
+            this.canvasOffsetX -= 10;
+            this.renderImage();
+            break;
+          case "ArrowRight":
+            this.canvasOffsetX += 10;
+            this.renderImage();
+            break;
+          case "ArrowUp":
+            this.canvasOffsetY -= 10;
+            this.renderImage();
+            break;
+          case "ArrowDown":
+            this.canvasOffsetY += 10;
+            this.renderImage();
+            break;
+        }
+      }
+    },
+    handleKeyUp(event) {
+      if (event.key.startsWith("Arrow")) {
+        this.renderImage();
+      }
+    },
     renderImage() {
       const img = new Image();
       const canvas = this.canvasRef;
@@ -187,8 +274,11 @@ export default {
         const scaledHeight = Math.round(
           img.height * scaleFactor * (this.selectedScale / 100)
         );
-        const x = Math.round((canvas.width - scaledWidth) / 2);
-        const y = Math.round((canvas.height - scaledHeight) / 2);
+
+        const x =
+          Math.round((canvas.width - scaledWidth) / 2) + this.canvasOffsetX;
+        const y =
+          Math.round((canvas.height - scaledHeight) / 2) + this.canvasOffsetY;
 
         this.imageWidth = Math.round(img.width * scaleFactor);
         this.imageHeight = Math.round(img.height * scaleFactor);
@@ -199,6 +289,7 @@ export default {
       };
       img.src = this.selectedImage;
     },
+
     renderImageAlgoritm(img) {
       const canvas = this.canvasRef;
       const ctx = this.canvasRef?.getContext("2d");
@@ -394,7 +485,7 @@ export default {
 }
 
 .canvas-editor {
-  height: calc(100% - 25px);
+  height: 100%;
 }
 
 .wrapper {
