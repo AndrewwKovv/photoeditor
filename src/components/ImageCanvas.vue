@@ -1,23 +1,22 @@
 <template>
   <div class="canvas-container">
-    <div class="wrapper">
-      <canvas
-        id="canvas"
-        class="canvas-editor"
-        ref="canvas"
-        @mousedown="handleMouseDown"
-        @mousemove="handleMouseMove"
-        @mouseup="handleMouseUp"
-        @mouseleave="handleMouseLeave"
-      ></canvas>
-      <ModalColor
-        v-if="colorInfoPanelVisible"
-        :selectedColor="selectedColors"
-        :xMouse="selectedPixel.x"
-        :yMouse="selectedPixel.y"
-        @closeSetting="colorInfoPanelVisible = false"
-      />
-    </div>
+    <canvas
+      id="canvas"
+      class="canvas-editor"
+      ref="canvas"
+      @mousedown="handleMouseDown"
+      @mousemove="handleMouseMove"
+      @mouseup="handleMouseUp"
+      @mouseleave="handleMouseLeave"
+    ></canvas>
+    <ModalColor
+      class="canvas-modal"
+      v-if="colorInfoPanelVisible"
+      :selectedColor="selectedColors"
+      :xMouse="selectedPixel.x"
+      :yMouse="selectedPixel.y"
+      @closeSetting="colorInfoPanelVisible = false"
+    />
 
     <ImageFooter
       :imageWidth="imageWidth"
@@ -145,7 +144,7 @@ export default {
       aspectRatio: 1,
       widthPercent: null,
       heightPercent: null,
-      colorInfoPanelVisible: true,
+      colorInfoPanelVisible: false,
       canvasOffsetX: 0,
       canvasOffsetY: 0,
       dragging: false,
@@ -325,8 +324,8 @@ export default {
         const y = Math.round((canvas.height - scaledHeight) / 2);
 
         ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
-        this.imageWidth = img.width;
-        this.imageHeight = img.height;
+        this.imageWidth = scaledWidth;
+        this.imageHeight = scaledHeight;
       };
       img.src = this.selectedImage;
     },
@@ -509,14 +508,19 @@ export default {
 }
 
 .canvas-editor {
-  height: 100%;
+  height: calc(100% - 25px);
 }
 
-.wrapper {
-  display: flex;
-  justify-content: space-between;
+.canvas-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 220px;
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
 }
-
 .modal {
   display: flex;
   justify-content: center;
