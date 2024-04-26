@@ -68,17 +68,16 @@
         @mouseenter="showTooltipFlag = true"
         @mouseleave="showTooltipFlag = false"
       >
-        Lab
+        OKLch
         <span class="tooltip" v-if="showTooltipFlag"
           >Визуально однородное цветовое пространство с компонентами,
-          отвечающими за яркость (L*) и цветовыми координатами (a*, b*),
-          идеально подходит для точного воспроизведения и коррекции цвета
-          .</span
+          отвечающими за яркость (L*), насыщенность (C*) и тон (h*),
+          используется для точного воспроизведения и коррекции цвета.</span
         >
       </p>
       <div class="color-parameters">
-        <p>{{ color1Lab }}</p>
-        <p>{{ color2Lab }}</p>
+        <p>{{ color1OKLch }}</p>
+        <p>{{ color2OKLch }}</p>
       </div>
     </div>
     <div
@@ -113,8 +112,8 @@ export default {
       color2RGB: "",
       color1XYZ: "",
       color2XYZ: "",
-      color1Lab: "",
-      color2Lab: "",
+      color1OKLch: "",
+      color2OKLch: "",
       contrast: null,
       showTooltipFlag: false,
     };
@@ -126,19 +125,19 @@ export default {
     updateColors() {
       const rgb = this.parseColor(this.selectedColor);
       const xyz = this.rgbToXyz(rgb);
-      const lab = this.xyzToLab(xyz);
+      const OKLch = this.xyzToOKLch(xyz);
       if (this.pickedButton === "button1") {
         this.color1X = this.xMouse;
         this.color1Y = this.yMouse;
         this.color1RGB = this.prettyColor(rgb, true);
         this.color1XYZ = this.prettyColor(xyz);
-        this.color1Lab = this.prettyColor(lab);
+        this.color1OKLch = this.prettyColor(OKLch);
       } else {
         this.color2X = this.xMouse;
         this.color2Y = this.yMouse;
         this.color2RGB = this.prettyColor(rgb, true);
         this.color2XYZ = this.prettyColor(xyz);
-        this.color2Lab = this.prettyColor(lab);
+        this.color2OKLch = this.prettyColor(OKLch);
       }
 
       if (this.color1 && this.color2) {
@@ -212,7 +211,7 @@ export default {
       return [x, y, z];
     },
 
-    xyzToLab(xyz) {
+    xyzToOKLch(xyz) {
       const [x, y, z] = xyz;
 
       // Коэффициенты для преобразования
@@ -227,14 +226,15 @@ export default {
       const epsilon = 0.008856;
       const kappa = 903.3;
 
-      const f = (t) =>
-        t > epsilon ? Math.pow(t, 1 / 3) : (kappa * t + 16) / 116;
+      const f = (t) => (t > epsilon ? Math.cbrt(t) : (kappa * t + 16) / 116);
 
       const L = 116 * f(fy) - 16;
-      const a = 500 * (f(fx) - f(fy));
-      const b = 200 * (f(fy) - f(fz));
+      const C = Math.sqrt(fx * fx + fy * fy + fz * fz);
+      let h = Math.atan2(fz, Math.sqrt(fx * fx + fy * fy));
+      if (h < 0) h += 2 * Math.PI;
+      h *= 180 / Math.PI;
 
-      return [L, a, b];
+      return [L, C, h];
     },
   },
   watch: {
