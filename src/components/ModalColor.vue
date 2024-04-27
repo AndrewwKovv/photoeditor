@@ -5,79 +5,118 @@
         <img src="@/assets/icons/crest.png" />
       </button>
     </div>
-    <div class="colors">
-      <input
-        v-model="pickedButton"
-        value="button1"
-        type="radio"
-        class="color-button"
-        :style="{ background: color1 }"
-      />
-      <input
-        v-model="pickedButton"
-        value="button2"
-        type="radio"
-        class="color-button"
-        :style="{ background: color2 }"
-      />
-    </div>
+    <div class="colors"></div>
     <div class="colors-info">
-      <div class="color-parameters">
-        <p>X</p>
-        <p>{{ color1X }}</p>
-        <p>{{ color2X }}</p>
+      <div class="colors-picked">
+        <input
+          v-model="pickedButton"
+          value="button1"
+          type="radio"
+          class="color-button"
+          :style="{ background: color1 }"
+        />
+        <div class="color-parameters">
+          <p>X:</p>
+          <p>{{ color1X }}</p>
+          <p>Y:</p>
+          <p>{{ color1Y }}</p>
+        </div>
       </div>
-      <div class="color-parameters">
-        <p>Y</p>
-        <p>{{ color1Y }}</p>
-        <p>{{ color2Y }}</p>
+      <div class="colors-picked">
+        <input
+          v-model="pickedButton"
+          value="button2"
+          type="radio"
+          class="color-button"
+          :style="{ background: color2 }"
+        />
+        <div class="color-parameters">
+          <p>X:</p>
+          <p>{{ color2X }}</p>
+          <p>Y:</p>
+          <p>{{ color2Y }}</p>
+        </div>
       </div>
-      <p
-        class="color-parameter"
-        @mouseenter="showTooltipFlag = true"
-        @mouseleave="showTooltipFlag = false"
-      >
-        RGB
-        <span class="tooltip" v-if="showTooltipFlag"
-          >Цветовая модель, сочетающая интенсивность красного, зеленого и синего
-          света для создания цветов на цифровых дисплеях.</span
-        >
-      </p>
-      <div class="color-parameters">
-        <p>{{ color1RGB }}</p>
-        <p>{{ color2RGB }}</p>
+      <div class="colors-table">
+        <div class="colors-table-info">
+          <p
+            class="color-parameter"
+            @mouseenter="showTooltipFlag = true"
+            @mouseleave="showTooltipFlag = false"
+          >
+            RGB
+            <span class="tooltip" v-if="showTooltipFlag"
+              >Цветовая модель, сочетающая интенсивность красного, зеленого и
+              синего света для создания цветов на цифровых дисплеях.</span
+            >
+          </p>
+          <div class="color-parameters">
+            <div class="color-param">
+              <p v-for="value in color1RGB.split(',')" :key="value">
+                {{ value.trim() }}
+              </p>
+            </div>
+            <div class="color-param">
+              <p v-for="value in color2RGB.split(',')" :key="value">
+                {{ value.trim() }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="colors-table-info">
+          <p
+            class="color-parameter"
+            @mouseenter="showTooltipFlag = true"
+            @mouseleave="showTooltipFlag = false"
+          >
+            XYZ
+            <span class="tooltip" v-if="showTooltipFlag"
+              >Стандартное цветовое пространство, представляющее зрительное
+              восприятие цветов человеком, используется в качестве основы для
+              других цветовых пространств.</span
+            >
+          </p>
+          <div class="color-parameters">
+            <div class="color-param">
+              <p v-for="value in color1XYZ.split(',')" :key="value">
+                {{ value.trim() }}
+              </p>
+            </div>
+            <div class="color-param">
+              <p v-for="value in color2XYZ.split(',')" :key="value">
+                {{ value.trim() }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <p
-        class="color-parameter"
-        @mouseenter="showTooltipFlag = true"
-        @mouseleave="showTooltipFlag = false"
-      >
-        XYZ
-        <span class="tooltip" v-if="showTooltipFlag"
-          >Стандартное цветовое пространство, представляющее зрительное
-          восприятие цветов человеком, используется в качестве основы для других
-          цветовых пространств.</span
-        >
-      </p>
-      <div class="color-parameters">
-        <p>{{ color1XYZ }}</p>
-        <p>{{ color2XYZ }}</p>
-      </div>
-      <p
-        class="color-parameter"
-        @mouseenter="showTooltipFlag = true"
-        @mouseleave="showTooltipFlag = false"
-      >
-        OKLch
-        <span class="tooltip" v-if="showTooltipFlag"
-          >Визуально однородное цветовое пространство с компонентами,
-          отвечающими за яркость (L*), насыщенность (C*) и тон (h*),
-          используется для точного воспроизведения и коррекции цвета.</span
-        >
-      </p>
-      <div class="color-parameters">
-        <p>{{ color1OKLch }}</p>
-        <p>{{ color2OKLch }}</p>
+      <div class="colors-table">
+        <div class="colors-table-info">
+          <p
+            class="color-parameter"
+            @mouseenter="showTooltipFlag = true"
+            @mouseleave="showTooltipFlag = false"
+          >
+            Lab
+            <span class="tooltip" v-if="showTooltipFlag"
+              >Воспринимаемое однородное цветовое пространство с компонентами
+              яркости (L*) и осями контраста цвета (a*, b*), идеально
+              подходящими для точной цветопередачи и коррекции.
+            </span>
+          </p>
+          <div class="color-parameters">
+            <div class="color-param">
+              <p v-for="value in color1Lab.split(',')" :key="value">
+                {{ value.trim() }}
+              </p>
+            </div>
+            <div class="color-param">
+              <p v-for="value in color2Lab.split(',')" :key="value">
+                {{ value.trim() }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div
@@ -112,8 +151,8 @@ export default {
       color2RGB: "",
       color1XYZ: "",
       color2XYZ: "",
-      color1OKLch: "",
-      color2OKLch: "",
+      color1Lab: "",
+      color2Lab: "",
       contrast: null,
       showTooltipFlag: false,
     };
@@ -125,19 +164,19 @@ export default {
     updateColors() {
       const rgb = this.parseColor(this.selectedColor);
       const xyz = this.rgbToXyz(rgb);
-      const OKLch = this.xyzToOKLch(xyz);
+      const lab = this.xyzToLab(xyz);
       if (this.pickedButton === "button1") {
         this.color1X = this.xMouse;
         this.color1Y = this.yMouse;
         this.color1RGB = this.prettyColor(rgb, true);
         this.color1XYZ = this.prettyColor(xyz);
-        this.color1OKLch = this.prettyColor(OKLch);
+        this.color1Lab = this.prettyColor(lab);
       } else {
         this.color2X = this.xMouse;
         this.color2Y = this.yMouse;
         this.color2RGB = this.prettyColor(rgb, true);
         this.color2XYZ = this.prettyColor(xyz);
-        this.color2OKLch = this.prettyColor(OKLch);
+        this.color2Lab = this.prettyColor(lab);
       }
 
       if (this.color1 && this.color2) {
@@ -204,14 +243,14 @@ export default {
       b *= 100;
 
       // Вычисляем XYZ
-      const x = r * 0.4124 + g * 0.3576 + b * 0.1805;
-      const y = r * 0.2126 + g * 0.7152 + b * 0.0722;
-      const z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+      const x = Math.round(r * 0.4124 + g * 0.3576 + b * 0.1805);
+      const y = Math.round(r * 0.2126 + g * 0.7152 + b * 0.0722);
+      const z = Math.round(r * 0.0193 + g * 0.1192 + b * 0.9505);
 
       return [x, y, z];
     },
 
-    xyzToOKLch(xyz) {
+    xyzToLab(xyz) {
       const [x, y, z] = xyz;
 
       // Коэффициенты для преобразования
@@ -226,15 +265,14 @@ export default {
       const epsilon = 0.008856;
       const kappa = 903.3;
 
-      const f = (t) => (t > epsilon ? Math.cbrt(t) : (kappa * t + 16) / 116);
+      const f = (t) =>
+        t > epsilon ? Math.pow(t, 1 / 3) : (kappa * t + 16) / 116;
 
-      const L = 116 * f(fy) - 16;
-      const C = Math.sqrt(fx * fx + fy * fy + fz * fz);
-      let h = Math.atan2(fz, Math.sqrt(fx * fx + fy * fy));
-      if (h < 0) h += 2 * Math.PI;
-      h *= 180 / Math.PI;
+      const L = Math.round(116 * f(fy) - 16);
+      const a = Math.round(500 * (f(fx) - f(fy)));
+      const b = Math.round(200 * (f(fy) - f(fz)));
 
-      return [L, C, h];
+      return [L, a, b];
     },
   },
   watch: {
@@ -273,15 +311,23 @@ export default {
 }
 .colors {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-evenly;
+  color: #fff;
+}
+.colors-picked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 15px;
 }
 .color-button {
   -webkit-appearance: none;
   cursor: pointer;
   border: 1px solid white;
   border-radius: 5px;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   &:checked {
     outline: 1px solid white;
     border: 1px solid white;
@@ -293,20 +339,23 @@ export default {
   flex-direction: column;
   align-items: center;
   color: #fff;
+  gap: 10px;
 }
 
 .color-parameters {
   border: 1px solid white;
   border-radius: 5px;
-  width: 100%;
+  width: 80%;
   display: flex;
-  margin-top: 10px;
-  justify-content: space-around;
+  /* margin-top: 10px; */
+  justify-content: space-evenly;
 }
-
-.color-parameter {
-  margin-top: 10px;
+.color-param {
+  text-align: center;
 }
+/* .color-parameter {
+  margin-top: 10px;
+} */
 
 .contrast {
   border: 1px solid white;
@@ -325,5 +374,16 @@ export default {
   white-space: nowrap;
   display: none;
   z-index: 999;
+}
+.colors-table {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+.colors-table-info {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
 }
 </style>
