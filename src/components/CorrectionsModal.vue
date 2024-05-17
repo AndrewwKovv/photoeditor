@@ -150,16 +150,22 @@ export default {
               label: "R",
               data: redHistogram,
               backgroundColor: "rgba(255, 0, 0, 1)",
+              borderWidth: 1,
+              fill: false,
             },
             {
               label: "G",
               data: greenHistogram,
               backgroundColor: "rgba(0, 255, 0, 1)",
+              borderWidth: 1,
+              fill: false,
             },
             {
               label: "B",
               data: blueHistogram,
               backgroundColor: "rgba(0, 0, 255, 1)",
+              borderWidth: 1,
+              fill: false,
             },
             {
               label: "Линия",
@@ -169,10 +175,10 @@ export default {
                 { x: this.input2, y: this.output2 },
                 { x: 255, y: this.output2 },
               ],
-              backgroundColor: "rgba(255, 255, 255, 1)",
-              borderColor: "rgb(255,255,255)",
-              borderWidth: 1,
+              borderColor: "rgba(255, 255, 255, 1)",
+              borderWidth: 2,
               fill: false,
+              tension: 0, // No curve, straight lines
             },
           ],
         },
@@ -185,16 +191,22 @@ export default {
             },
           },
           animation: false,
+          aspectRatio: 1, // Ensures the chart is square
           scales: {
             x: {
               display: true,
+              min: 0,
+              max: 255,
+              type: "linear", // Ensure numerical scaling
               ticks: {
                 color: "white",
               },
             },
             y: {
-              beginAtZero: true,
               display: true,
+              min: 0,
+              max: 255,
+              type: "linear", // Ensure numerical scaling
               ticks: {
                 color: "white",
               },
@@ -203,6 +215,7 @@ export default {
         },
       });
     },
+
     calculateCorrection() {
       try {
         const lut = [];
