@@ -169,13 +169,21 @@ export default {
                 { x: this.input2, y: this.output2 },
                 { x: 255, y: this.output2 },
               ],
-              borderColor: "rgba(0,0,0,1)",
+              backgroundColor: "rgba(255, 255, 255, 1)",
+              borderColor: "rgb(255,255,255)",
               borderWidth: 1,
               fill: false,
             },
           ],
         },
         options: {
+          plugins: {
+            legend: {
+              labels: {
+                color: "white",
+              },
+            },
+          },
           animation: false,
           scales: {
             x: {
@@ -233,7 +241,6 @@ export default {
       }
     },
     revertCorrection() {
-      this.imgCorrected = false;
       this.buildGraph();
       this.togglePreview = false;
       this.$emit("renderImage");
@@ -296,6 +303,9 @@ export default {
     },
   },
   watch: {
+    newImg() {
+      this.buildGraph();
+    },
     togglePreview(newVal) {
       if (newVal) {
         this.calculateCorrection();
