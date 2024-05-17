@@ -17,6 +17,18 @@
       :yMouse="selectedPixel.y"
       @closeSetting="colorInfoPanelVisible = false"
     />
+    <CorrectionsModal
+      class="canvas-modal"
+      v-if="correctionPanelVisible"
+      :canvasRef="canvasRef || {}"
+      :xMouse="offsetX"
+      :yMouse="offsetY"
+      :iw="imageWidth"
+      :ih="imageHeight"
+      :origImg="selectedImage"
+      @update:origImg="origImg = $event"
+      @closeSetting="correctionPanelVisible = false"
+    />
 
     <ImageFooter
       :imageWidth="imageWidth"
@@ -114,6 +126,7 @@
 <script>
 import ImageFooter from "./ImageFooter.vue";
 import ModalColor from "./ModalColor.vue";
+import CorrectionsModal from "./CorrectionsModal.vue";
 import { nearestNeighborInterpolation } from "@/nearestNeighborInterpolation.ts";
 import { watch } from "vue";
 
@@ -122,6 +135,7 @@ export default {
   components: {
     ImageFooter,
     ModalColor,
+    CorrectionsModal,
   },
   emits: ["closeResizeModal"],
   data() {
@@ -131,7 +145,6 @@ export default {
       selectedColor: null,
       selectedColors: "",
       selectedPixel: { x: 0, y: 0 },
-      imageUrl: "",
       canvasRef: null,
       newImg: null,
       selectedScale: 100,
@@ -146,8 +159,11 @@ export default {
       heightPercent: null,
       colorInfoPanelVisible: false,
       canvasOffsetX: 0,
+      offsetX: 0,
+      offsetY: 0,
       canvasOffsetY: 0,
       dragging: false,
+      correctionPanelVisible: false,
     };
   },
   props: {
@@ -178,6 +194,7 @@ export default {
       if (newValue === "Пипетка") {
         this.colorInfoPanelVisible = true;
       }
+      if (newValue === "Кривые") this.correctionPanelVisible = true;
     },
     newImg: {
       handler() {
@@ -288,6 +305,8 @@ export default {
           this.canvasOffsetY -
           scrollY;
 
+        this.offsetX = x;
+        this.offsetY = y;
         // Добавляем отступы
         const margin = 10;
         x = Math.min(Math.max(x, -scaledWidth + margin), canvasWidth - margin);
@@ -322,7 +341,8 @@ export default {
         );
         const x = Math.round((canvas.width - scaledWidth) / 2);
         const y = Math.round((canvas.height - scaledHeight) / 2);
-
+        this.offsetX = x;
+        this.offsetY = y;
         ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
         this.imageWidth = scaledWidth;
         this.imageHeight = scaledHeight;

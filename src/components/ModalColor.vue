@@ -158,6 +158,7 @@ export default {
     };
   },
   methods: {
+    // Настройка пипетки
     closeSetting() {
       this.$emit("closeSetting");
     },
@@ -298,10 +299,12 @@ export default {
   height: calc(100vh - 25px);
   border-bottom: 2px solid #383838;
 }
+
 .panel-header {
   display: flex;
   justify-content: end;
 }
+
 .close-button {
   cursor: pointer;
   color: #fff;
@@ -309,11 +312,13 @@ export default {
   width: 24px;
   height: 24px;
 }
+
 .colors {
   display: flex;
   justify-content: space-evenly;
   color: #fff;
 }
+
 .colors-picked {
   display: flex;
   align-items: center;
@@ -321,6 +326,7 @@ export default {
   width: 100%;
   gap: 15px;
 }
+
 .color-button {
   -webkit-appearance: none;
   cursor: pointer;
@@ -328,11 +334,13 @@ export default {
   border-radius: 5px;
   width: 22px;
   height: 22px;
+
   &:checked {
     outline: 1px solid white;
     border: 1px solid white;
   }
 }
+
 .colors-info {
   font-size: small;
   display: flex;
@@ -350,9 +358,11 @@ export default {
   /* margin-top: 10px; */
   justify-content: space-evenly;
 }
+
 .color-param {
   text-align: center;
 }
+
 /* .color-parameter {
   margin-top: 10px;
 } */
@@ -362,6 +372,7 @@ export default {
   text-align: center;
   margin-top: 10px;
 }
+
 .tooltip {
   position: absolute;
   background-color: #fff;
@@ -375,11 +386,13 @@ export default {
   display: none;
   z-index: 999;
 }
+
 .colors-table {
   display: flex;
   justify-content: space-between;
   width: 100%;
 }
+
 .colors-table-info {
   display: flex;
   flex-direction: column;

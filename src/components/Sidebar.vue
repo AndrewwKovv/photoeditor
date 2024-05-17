@@ -96,6 +96,11 @@ export default {
           name: "Рука",
           icon: require("../assets/icons/Icon/W95-104.png"),
         },
+        {
+          id: 4,
+          name: "Кривые",
+          icon: require("../assets/icons/Icon/W95-78.png"),
+        },
       ],
       showTooltipFlag: false,
       currentTool: "",
