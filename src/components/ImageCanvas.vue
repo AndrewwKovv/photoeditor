@@ -27,6 +27,7 @@
       :ih="imageHeight"
       :origImg="selectedImage"
       @update:origImg="origImg = $event"
+      @renderImage="renderImage"
       @closeSetting="correctionPanelVisible = false"
     />
 

@@ -9,41 +9,21 @@
       <div class="input-fields-wrapper">
         <div class="input-fields-i">
           <label for="input1">x1:</label>
-          <input
-            id="input1"
-            :value="input1"
-            @change="updateX1"
-            :disabled="togglePreview"
-          />
+          <input id="input1" :value="input1" @change="updateX1" />
         </div>
         <div class="input-fields-i">
           <label for="output1">y1:</label>
-          <input
-            id="output1"
-            :value="output1"
-            @change="updateY1"
-            :disabled="togglePreview"
-          />
+          <input id="output1" :value="output1" @change="updateY1" />
         </div>
       </div>
       <div class="input-fields-wrapper">
         <div class="input-fields-i">
           <label for="input2">x2:</label>
-          <input
-            id="input2"
-            :value="input2"
-            @change="updateX2"
-            :disabled="togglePreview"
-          />
+          <input id="input2" :value="input2" @change="updateX2" />
         </div>
         <div class="input-fields-i">
           <label for="output2">y2:</label>
-          <input
-            id="output2"
-            :value="output2"
-            @change="updateY2"
-            :disabled="togglePreview"
-          />
+          <input id="output2" :value="output2" @change="updateY2" />
         </div>
       </div>
       <div class="corrections-preview">
@@ -69,13 +49,7 @@
       <canvas id="chart" width="100" height="100" ref="chart"></canvas>
     </div>
     <div class="buttons">
-      <button
-        class="apply-button"
-        @click="applyCorrection"
-        :disabled="imgCorrected"
-      >
-        Применить
-      </button>
+      <button class="apply-button" @click="applyCorrection">Применить</button>
       <button class="reset-button" @click="resetValues">Сброс</button>
     </div>
   </aside>
@@ -261,6 +235,8 @@ export default {
     revertCorrection() {
       this.imgCorrected = false;
       this.buildGraph();
+      this.togglePreview = false;
+      this.$emit("renderImage");
     },
     applyCorrection() {
       this.closeSetting();
@@ -288,7 +264,7 @@ export default {
     updateY1(event) {
       const num = +event.target.value;
 
-      if (!isNaN(num) && num >= 0 && num < 255) {
+      if (!isNaN(num) && num >= 0 && num <= 255) {
         this.output1 = num;
         this.buildGraph();
       } else {
@@ -320,9 +296,6 @@ export default {
     },
   },
   watch: {
-    newImg() {
-      this.buildGraph();
-    },
     togglePreview(newVal) {
       if (newVal) {
         this.calculateCorrection();
