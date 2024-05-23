@@ -58,7 +58,7 @@
     </div>
     <div class="buttons">
       <button class="apply-button" @click="applyFiltration">Применить</button>
-      <button class="reset-button" @click="revertFiltration">Сброс</button>
+      <button class="reset-button" @click="resetValues">Сброс</button>
     </div>
   </aside>
 </template>
@@ -92,96 +92,98 @@ export default {
       this.$emit("closeSetting");
     },
     applyPreset(preset) {
-      switch (preset) {
-        case "identity":
-          this.kernel = [
-            [0, 0, 0],
-            [0, 1, 0],
-            [0, 0, 0],
-          ];
-          break;
-        case "sharpen":
-          this.kernel = [
-            [0, -1, 0],
-            [-1, 5, -1],
-            [0, -1, 0],
-          ];
-          break;
-        case "gaussian":
-          this.kernel = [
-            [1, 2, 1],
-            [2, 4, 2],
-            [1, 2, 1],
-          ];
-          break;
-        case "blur":
-          this.kernel = [
-            [1, 1, 1],
-            [1, 1, 1],
-            [1, 1, 1],
-          ];
-          break;
-        default:
-          break;
-      }
+      const kernels = {
+        identity: [
+          [0, 0, 0],
+          [0, 1, 0],
+          [0, 0, 0],
+        ],
+        sharpen: [
+          [0, -1, 0],
+          [-1, 5, -1],
+          [0, -1, 0],
+        ],
+        gaussian: [
+          [1, 2, 1],
+          [2, 4, 2],
+          [1, 2, 1],
+        ],
+        blur: [
+          [1, 1, 1],
+          [1, 1, 1],
+          [1, 1, 1],
+        ],
+      };
+      this.kernel = kernels[preset] || kernels.identity;
     },
     updateKernel(event, rowIndex, colIndex) {
       const num = +event.target.value;
-
       if (!isNaN(num)) {
         this.kernel[rowIndex][colIndex] = num;
-      } else {
-        this.kernel[rowIndex][colIndex] += 1;
-        this.kernel[rowIndex][colIndex] -= 1;
       }
     },
+    // Функция для применения фильтрации к изображению на основе заданного ядра
     calculateFiltration() {
       const ctx = this.canvasRef?.getContext("2d");
+      if (!ctx) return;
+
+      // Получение данных изображения из канваса
       const imageData = ctx.getImageData(
         this.xMouse,
         this.yMouse,
         this.iw,
         this.ih
       );
+      // Создание нового массива для хранения отфильтрованных данных изображения
       const newData = new Uint8ClampedArray(imageData.data.length);
-
-      // Обработка краев (padding)
+      // Получение дополненных данных изображения для обработки краевых пикселей
       const paddedData = this.padImageData(
         imageData.data,
         imageData.width,
         imageData.height
       );
 
-      // Свертка по каналам
+      // Вычисление суммы всех элементов ядра (для нормализации)
+      const kernelSum = this.kernel.flat().reduce((a, b) => a + b, 0) || 1;
+
+      // Проход по каждому пикселю изображения
       for (let y = 0; y < imageData.height; y++) {
         for (let x = 0; x < imageData.width; x++) {
-          for (let c = 0; c < 4; c++) {
-            // Каналы: R, G, B, A
-            const outputIndex = (y * imageData.width + x) * 4 + c;
-            let sum = 0;
-            let kernelSum = 0;
-            for (let ky = 0; ky < 3; ky++) {
-              for (let kx = 0; kx < 3; kx++) {
-                const inputIndex =
-                  ((y + ky) * (imageData.width + 2) + (x + kx)) * 4 + c;
-                sum += paddedData[inputIndex] * this.kernel[ky][kx];
-                kernelSum += this.kernel[ky][kx];
-              }
+          let sumR = 0,
+            sumG = 0,
+            sumB = 0,
+            sumA = 0;
+          // Применение фильтра (свертка с ядром) к пикселям в окрестности
+          for (let ky = 0; ky < 3; ky++) {
+            for (let kx = 0; kx < 3; kx++) {
+              const inputIndex =
+                ((y + ky) * (imageData.width + 2) + (x + kx)) * 4;
+              const weight = this.kernel[ky][kx];
+              sumR += paddedData[inputIndex] * weight;
+              sumG += paddedData[inputIndex + 1] * weight;
+              sumB += paddedData[inputIndex + 2] * weight;
+              sumA += paddedData[inputIndex + 3] * weight;
             }
-            newData[outputIndex] = sum / kernelSum;
           }
+          const outputIndex = (y * imageData.width + x) * 4;
+          newData[outputIndex] = sumR / kernelSum;
+          newData[outputIndex + 1] = sumG / kernelSum;
+          newData[outputIndex + 2] = sumB / kernelSum;
+          newData[outputIndex + 3] = sumA / kernelSum;
         }
       }
 
+      // Обновление данных изображения в канвасе
       imageData.data.set(newData);
       ctx.putImageData(imageData, this.xMouse, this.yMouse);
     },
+    // Функция для дополнения данных изображения, чтобы избежать проблем с краевыми пикселями при свертке
     padImageData(data, width, height) {
       const paddedWidth = width + 2;
       const paddedHeight = height + 2;
       const paddedData = new Uint8ClampedArray(paddedWidth * paddedHeight * 4);
 
-      // Копирование исходных данных
+      // Копирование исходных данных изображения в центр дополненного массива
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           const inputIndex = (y * width + x) * 4;
@@ -193,7 +195,7 @@ export default {
         }
       }
 
-      // Обработка краев (дублирование краевых пискелей)
+      // Заполнение краев дополненного массива, копируя соседние пиксели
       for (let y = 0; y < paddedHeight; y++) {
         for (let x = 0; x < paddedWidth; x++) {
           const outputIndex = (y * paddedWidth + x) * 4;
@@ -215,10 +217,13 @@ export default {
       }
       return paddedData;
     },
+    resetValues() {
+      this.applyPreset("identity");
+      this.revertFiltration();
+    },
     revertFiltration() {
       this.togglePreview = false;
       this.$emit("renderImage");
-      this.applyPreset("identity");
     },
     applyFiltration() {
       this.closeSetting();
@@ -228,10 +233,18 @@ export default {
   watch: {
     togglePreview(newVal) {
       if (newVal) {
-        this.calculateFiltration(); //render
+        this.calculateFiltration();
       } else {
-        this.revertFiltration(); // clear
+        this.revertFiltration();
       }
+    },
+    kernel: {
+      handler() {
+        if (this.togglePreview) {
+          this.calculateFiltration();
+        }
+      },
+      deep: true,
     },
   },
 };
