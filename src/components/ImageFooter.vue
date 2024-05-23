@@ -59,6 +59,7 @@ export default {
   display: flex;
   justify-content: space-between;
   gap: 15px;
+  width: 100%;
 }
 .image-stat {
   display: flex;

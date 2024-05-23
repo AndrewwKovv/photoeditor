@@ -30,6 +30,19 @@
       @renderImage="renderImage"
       @closeSetting="correctionPanelVisible = false"
     />
+    <FiltrationModal
+      class="canvas-modal"
+      v-if="filtrPanelVisible"
+      :canvasRef="canvasRef || {}"
+      :xMouse="offsetX"
+      :yMouse="offsetY"
+      :iw="imageWidth"
+      :ih="imageHeight"
+      :origImg="selectedImage"
+      @update:origImg="origImg = $event"
+      @renderImage="renderImage"
+      @closeSetting="filtrPanelVisible = false"
+    />
 
     <ImageFooter
       :imageWidth="imageWidth"
@@ -128,6 +141,7 @@
 import ImageFooter from "./ImageFooter.vue";
 import ModalColor from "./ModalColor.vue";
 import CorrectionsModal from "./CorrectionsModal.vue";
+import FiltrationModal from "./FiltrationModal.vue";
 import { nearestNeighborInterpolation } from "@/nearestNeighborInterpolation.ts";
 import { watch } from "vue";
 
@@ -137,6 +151,7 @@ export default {
     ImageFooter,
     ModalColor,
     CorrectionsModal,
+    FiltrationModal,
   },
   emits: ["closeResizeModal"],
   data() {
@@ -165,6 +180,7 @@ export default {
       canvasOffsetY: 0,
       dragging: false,
       correctionPanelVisible: false,
+      filtrPanelVisible: false,
     };
   },
   props: {
@@ -196,6 +212,7 @@ export default {
         this.colorInfoPanelVisible = true;
       }
       if (newValue === "Кривые") this.correctionPanelVisible = true;
+      if (newValue === "Фильтрация") this.filtrPanelVisible = true;
     },
     newImg: {
       handler() {
@@ -530,6 +547,7 @@ export default {
 
 .canvas-editor {
   height: calc(100% - 25px);
+  width: 100%;
 }
 
 .canvas-modal {

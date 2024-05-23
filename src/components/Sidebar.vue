@@ -101,6 +101,11 @@ export default {
           name: "Кривые",
           icon: require("../assets/icons/Icon/W95-78.png"),
         },
+        {
+          id: 5,
+          name: "Фильтрация",
+          icon: require("../assets/icons/Icon/W95-38.png"),
+        },
       ],
       showTooltipFlag: false,
       currentTool: "",
