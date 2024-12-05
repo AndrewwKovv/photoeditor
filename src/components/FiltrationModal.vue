@@ -143,36 +143,29 @@ export default {
         imageData.height
       );
 
-      // Вычисление суммы всех элементов ядра (для нормализации)
-      const kernelSum = this.kernel.flat().reduce((a, b) => a + b, 0) || 1;
+      const kernelSize = 3;
+      const halfKernelSize = Math.floor(kernelSize / 2);
 
       // Проход по каждому пикселю изображения
       for (let y = 0; y < imageData.height; y++) {
         for (let x = 0; x < imageData.width; x++) {
-          let sumR = 0,
-            sumG = 0,
-            sumB = 0,
-            sumA = 0;
-          // Применение фильтра (свертка с ядром) к пикселям в окрестности
-          for (let ky = 0; ky < 3; ky++) {
-            for (let kx = 0; kx < 3; kx++) {
-              const inputIndex =
-                ((y + ky) * (imageData.width + 2) + (x + kx)) * 4;
-              const weight = this.kernel[ky][kx];
-              sumR += paddedData[inputIndex] * weight;
-              sumG += paddedData[inputIndex + 1] * weight;
-              sumB += paddedData[inputIndex + 2] * weight;
-              sumA += paddedData[inputIndex + 3] * weight;
+          for (let c = 0; c < 4; c++) {
+            let sum = 0;
+            for (let ky = 0; ky < kernelSize; ky++) {
+              for (let kx = 0; kx < kernelSize; kx++) {
+                const inputIndex =
+                  ((y + ky) * (imageData.width + 2) + (x + kx)) * 4 + c;
+                sum += this.kernel[ky][kx] * paddedData[inputIndex];
+              }
+            }
+            const outputIndex = (y * imageData.width + x) * 4 + c;
+            newData[outputIndex] = sum;
+            if (c === 3) {
+              newData[outputIndex] = 255; // Альфа-канал остается 255
             }
           }
-          const outputIndex = (y * imageData.width + x) * 4;
-          newData[outputIndex] = sumR / kernelSum;
-          newData[outputIndex + 1] = sumG / kernelSum;
-          newData[outputIndex + 2] = sumB / kernelSum;
-          newData[outputIndex + 3] = sumA / kernelSum;
         }
       }
-
       // Обновление данных изображения в канвасе
       imageData.data.set(newData);
       ctx.putImageData(imageData, this.xMouse, this.yMouse);
@@ -187,15 +180,13 @@ export default {
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           const inputIndex = (y * width + x) * 4;
-          const outputIndex = ((y + 1) * paddedWidth + x + 1) * 4;
+          const outputIndex = ((y + 1) * paddedWidth + (x + 1)) * 4;
           paddedData.set(
             data.subarray(inputIndex, inputIndex + 4),
             outputIndex
           );
         }
       }
-
-      // Заполнение краев дополненного массива, копируя соседние пиксели
       for (let y = 0; y < paddedHeight; y++) {
         for (let x = 0; x < paddedWidth; x++) {
           const outputIndex = (y * paddedWidth + x) * 4;
@@ -258,6 +249,7 @@ export default {
   height: calc(100vh - 25px);
   border-bottom: 2px solid #383838;
 }
+
 .panel-header {
   display: flex;
   justify-content: end;
@@ -270,8 +262,19 @@ export default {
   width: 24px;
   height: 24px;
 }
+
 .input-fields {
   margin-top: 20px;
+}
+
+.filtration-preset {
+  width: 100%;
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+  border-radius: 5px;
+  padding: 5px;
+  margin-bottom: 20px;
 }
 
 .input-fields-wrapper {
@@ -279,38 +282,40 @@ export default {
   display: flex;
   justify-content: space-around;
   margin-bottom: 10px;
-  border: 1px solid white;
-  border-radius: 5px;
 }
-.input-fields-i {
-  display: flex;
-  max-width: 50px;
-}
-.filtration-content {
-  display: flex;
-  gap: 10px;
-}
+
 .filtration-inputs {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 .point-inputs {
   display: flex;
   gap: 3px;
 }
+
 .point-inputs-column {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.point-with-prefix[type="input"] {
+
+.point-with-prefix {
   position: relative;
-  height: 20px;
-  width: 28px;
+  border: 1px solid white;
   border-radius: 5px;
-  padding-left: 5px;
 }
+
+.point-with-prefix input {
+  background-color: transparent;
+  color: white;
+  padding-left: 5px;
+  width: 50px;
+  border: none;
+  text-align: center;
+}
+
 .corrections-preview {
   display: flex;
   justify-content: center;
@@ -320,6 +325,7 @@ export default {
 .preview-active {
   opacity: 0.6;
 }
+
 .buttons {
   display: flex;
   justify-content: space-between;
@@ -340,25 +346,12 @@ export default {
 .reset-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
-.curve-chart {
-  font-size: small;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 10px;
-}
-
-input {
-  background-color: transparent;
-  color: white;
-  padding-left: 5px;
-  width: 50px;
-}
 
 .custom-checkbox {
   position: relative;
   display: inline-block;
 }
+
 .checkbox-image {
   width: 20px;
   height: 20px;
@@ -369,5 +362,6 @@ input[type="checkbox"] {
   position: absolute;
   opacity: 0;
   cursor: pointer;
+  width: 35px;
 }
 </style>
